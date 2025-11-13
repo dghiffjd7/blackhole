@@ -1,0 +1,49 @@
+{
+  "mass_solar": 650000000.0,
+  "grav_radius_m": 1919670598343.4712,
+  "max_rel_error": 0.0003806214490893314,
+  "mean_rel_error": 5.066581826187032e-05,
+  "ok": true,
+  "entries": [
+    {
+      "quantity": "isco",
+      "spin": 0.0,
+      "relative_error": 0.0
+    },
+    {
+      "quantity": "isco",
+      "spin": 0.5,
+      "relative_error": 5.975740199806881e-07
+    },
+    {
+      "quantity": "isco",
+      "spin": 0.9,
+      "relative_error": 0.0003806214490893314
+    },
+    {
+      "quantity": "isco",
+      "spin": 0.998,
+      "relative_error": 2.372257462847606e-05
+    },
+    {
+      "quantity": "photon",
+      "spin": 0.0,
+      "relative_error": 3.8490025359531427e-07
+    },
+    {
+      "quantity": "photon",
+      "spin": 0.5,
+      "relative_error": 1.442530676068388e-11
+    },
+    {
+      "quantity": "photon",
+      "spin": 0.9,
+      "relative_error": 1.500964903886145e-11
+    },
+    {
+      "quantity": "photon",
+      "spin": 0.998,
+      "relative_error": 1.8668623289102573e-11
+    }
+  ]
+}

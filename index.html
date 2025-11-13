@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+    />
+    <title>Interstellar Kerr 黑洞卡</title>
+    <link rel="stylesheet" href="src/styles.css" />
+  </head>
+  <body>
+    <main class="card">
+      <header class="card__header">
+        <div>
+          <p class="eyebrow">實時重力透鏡演算</p>
+          <h1>Interstellar Kerr 黑洞卡</h1>
+        </div>
+        <div class="card__actions">
+          <div class="status-pill" id="solver-status">WASM 模組未載入</div>
+          <button id="control-reset" class="ghost-button" type="button">
+            重置視角
+          </button>
+        </div>
+      </header>
+
+      <section class="card__visual">
+        <canvas
+          id="bh-canvas"
+          width="1280"
+          height="720"
+          aria-label="Kerr black hole ray-traced render"
+        >
+          您的瀏覽器不支援 WebGL
+        </canvas>
+        <ul class="telemetry">
+          <li>
+            <span class="label">質量</span>
+            <span class="value" id="metric-mass">--</span>
+          </li>
+          <li>
+            <span class="label">自旋 a</span>
+            <span class="value" id="metric-spin">--</span>
+          </li>
+          <li>
+            <span class="label">ISCO</span>
+            <span class="value" id="metric-isco">--</span>
+          </li>
+          <li>
+            <span class="label">光子球</span>
+            <span class="value" id="metric-photon">--</span>
+          </li>
+          <li>
+            <span class="label">紅移 z</span>
+            <span class="value" id="metric-redshift">--</span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="card__panel">
+        <div class="tabs" role="tablist">
+          <button
+            id="tab-button-controls"
+            class="tab is-active"
+            role="tab"
+            aria-selected="true"
+            data-tab-target="controls"
+          >
+            參數控制
+          </button>
+          <button
+            class="tab"
+            id="tab-button-calculations"
+            role="tab"
+            aria-selected="false"
+            data-tab-target="calculations"
+          >
+            實時計算
+          </button>
+        </div>
+
+        <div
+          id="tab-controls"
+          class="tabpanel is-active"
+          role="tabpanel"
+          aria-labelledby="tab-button-controls"
+        >
+          <section class="card__controls">
+            <fieldset>
+              <div class="control-label">
+                <label for="control-spin">自旋 a</label>
+                <span class="control-value" data-control-value="spin">0.998</span>
+              </div>
+              <input
+                id="control-spin"
+                type="range"
+                min="0.0"
+                max="0.998"
+                step="0.001"
+                value="0.998"
+              />
+            </fieldset>
+            <fieldset>
+              <div class="control-label">
+                <label for="control-inclination">視角傾角 (°)</label>
+                <span
+                  class="control-value"
+                  data-control-value="inclination"
+                  >60</span
+                >
+              </div>
+              <input
+                id="control-inclination"
+                type="range"
+                min="0"
+                max="90"
+                step="1"
+                value="60"
+              />
+            </fieldset>
+            <fieldset>
+              <div class="control-label">
+                <label for="control-distance">觀測距離 (Rg)</label>
+                <span class="control-value" data-control-value="distance"
+                  >60</span
+                >
+              </div>
+              <input
+                id="control-distance"
+                type="range"
+                min="10"
+                max="200"
+                step="1"
+                value="60"
+              />
+            </fieldset>
+            <fieldset>
+              <div class="control-label">
+                <label for="control-disk-inner">盤面內緣 (Rg)</label>
+                <span class="control-value" data-control-value="diskInner"
+                  >1.4</span
+                >
+              </div>
+              <input
+                id="control-disk-inner"
+                type="range"
+                min="0.5"
+                max="5"
+                step="0.1"
+                value="1.4"
+              />
+            </fieldset>
+            <fieldset>
+              <div class="control-label">
+                <label for="control-disk-outer">盤面外緣 (Rg)</label>
+                <span class="control-value" data-control-value="diskOuter"
+                  >12</span
+                >
+              </div>
+              <input
+                id="control-disk-outer"
+                type="range"
+                min="5"
+                max="40"
+                step="0.5"
+                value="12"
+              />
+            </fieldset>
+            <fieldset>
+              <div class="control-label">
+                <label for="control-doppler">Doppler 助推</label>
+                <span class="control-value" data-control-value="doppler"
+                  >1.5</span
+                >
+              </div>
+              <input
+                id="control-doppler"
+                type="range"
+                min="0.5"
+                max="3"
+                step="0.05"
+                value="1.5"
+              />
+            </fieldset>
+            <fieldset>
+              <div class="control-label">
+                <label for="control-exposure">曝光 / 色溫</label>
+                <span class="control-value" data-control-value="exposure"
+                  >1.1</span
+                >
+              </div>
+              <input
+                id="control-exposure"
+                type="range"
+                min="0.6"
+                max="1.6"
+                step="0.02"
+                value="1.1"
+              />
+            </fieldset>
+            <fieldset>
+              <div class="control-label">
+                <label for="control-flow">盤面流速</label>
+                <span class="control-value" data-control-value="flow">1.2</span>
+              </div>
+              <input
+                id="control-flow"
+                type="range"
+                min="0.5"
+                max="2.5"
+                step="0.05"
+                value="1.2"
+              />
+            </fieldset>
+            <fieldset>
+              <div class="control-label">
+                <label for="control-camera-azimuth">視角方位 (°)</label>
+                <span class="control-value" data-control-value="camAzimuth"
+                  >0</span
+                >
+              </div>
+              <input
+                id="control-camera-azimuth"
+                type="range"
+                min="0"
+                max="360"
+                step="0.1"
+                value="0"
+              />
+            </fieldset>
+            <fieldset>
+              <div class="control-label">
+                <label for="control-camera-elevation">視角仰角 (°)</label>
+                <span class="control-value" data-control-value="camElevation"
+                  >95</span
+                >
+              </div>
+              <input
+            id="control-camera-elevation"
+            type="range"
+            min="0"
+            max="360"
+            step="0.1"
+            value="359.8"
+          />
+        </fieldset>
+        <fieldset>
+          <div class="control-label">
+            <label for="control-camera-zoom">鏡頭縮放</label>
+            <span class="control-value" data-control-value="camZoom"
+              >0.53</span
+            >
+          </div>
+          <input
+            id="control-camera-zoom"
+            type="range"
+            min="0.5"
+            max="2.2"
+            step="0.01"
+            value="0.53"
+          />
+        </fieldset>
+          </section>
+        </div>
+
+        <div
+          id="tab-calculations"
+          class="tabpanel"
+          role="tabpanel"
+          aria-labelledby="tab-button-calculations"
+        >
+          <div class="calc-grid" id="calc-readout">
+            <!-- 動態插入 -->
+          </div>
+        </div>
+      </section>
+
+      <section class="card__verification">
+        <div>
+          <h2>驗證狀態</h2>
+          <p id="verification-summary">
+            尚未執行 validation/verify_kerr.py
+          </p>
+        </div>
+        <div class="fps-readout">
+          <span class="label">fps</span>
+          <span class="value" id="metric-fps">--</span>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
