@@ -260,37 +260,41 @@
         color: #000;
       }
 
-      .info-button {
-        border: 1px solid #445;
-        background: transparent;
-        color: #dca868;
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        font-size: 14px;
-        cursor: pointer;
-        position: relative;
-      }
+        .info-button {
+            border: 1px solid #445;
+            background: transparent;
+            color: #dca868;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 14px;
+            cursor: pointer;
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-      .tooltip {
-        position: absolute;
-        top: 35px;
-        right: 0;
-        width: 260px;
-        background: rgba(20, 24, 30, 0.95);
+        .tooltip {
+            position: fixed;
+            top: 35px;
+            right: 0;
+            width: 260px;
+            background: rgba(20, 24, 30, 0.95);
         color: #d1e9ff;
-        padding: 10px;
-        border: 1px solid #445;
-        border-radius: 8px;
-        font-size: 10px;
-        line-height: 1.4;
-        display: none;
-        z-index: 5;
-      }
+            padding: 10px;
+            border: 1px solid #445;
+            border-radius: 8px;
+            font-size: 10px;
+            line-height: 1.4;
+            display: none;
+            z-index: 5;
+            cursor: grab;
+        }
 
-      .tooltip.visible {
-        display: block;
-      }
+        .tooltip.visible {
+            display: block;
+        }
 
       #formula-input {
         width: 100%;
@@ -311,12 +315,64 @@
         gap: 8px;
       }
 
-      #formula-output {
-        margin-top: 10px;
-        font-size: 10px;
-        color: #a5d9ff;
-        min-height: 40px;
-      }
+        #formula-output {
+            margin-top: 10px;
+            font-size: 10px;
+            color: #a5d9ff;
+            min-height: 40px;
+        }
+
+        .calc-console.fullscreen {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            bottom: 20px;
+            z-index: 200;
+            background: rgba(3, 5, 10, 0.95);
+            border-width: 2px;
+            backdrop-filter: blur(6px);
+        }
+
+        .calc-console.fullscreen #formula-input {
+            min-height: calc(100vh - 220px);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #suggestion-list {
+            margin-top: 8px;
+            display: none;
+            border: 1px solid #334;
+            border-radius: 8px;
+            background: rgba(5, 7, 12, 0.8);
+            font-size: 10px;
+            color: #d1e3ff;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        #suggestion-list.visible {
+            display: block;
+        }
+
+        .suggestion-item {
+            padding: 6px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-item:hover {
+            background: rgba(220, 168, 104, 0.1);
+        }
 
       #start-overlay {
         position: absolute;
@@ -480,27 +536,30 @@
           </article>
         </div>
         <pre id="formula-panel"></pre>
-        <section class="calc-console">
+        <section class="calc-console" id="calc-console">
           <div class="console-header">
             <h3>自定義計算</h3>
-            <div>
+            <div class="header-actions">
+              <button id="console-fullscreen" class="pill-button">⤢</button>
               <button id="console-toggle" class="pill-button active">LIVE</button>
-              <button id="console-info" class="info-button">❗</button>
-              <div id="console-tooltip" class="tooltip">
-                可使用的符號：<br />
-                r (Rg)，a (spin)，beta (ISCO β)，incl (傾角，弧度)，Rg，ISCO，photon，z。<br />
-                每行格式：變數 = 表達式，如<br />
-                doppler = sqrt((1+beta)/(1-beta))<br />
-                inclination = 45<br />
-                受支援操作：+ - * / () pow sqrt sin cos 等。
+              <div style="position: relative">
+                <button id="console-info" class="info-button">❗</button>
+                <div id="console-tooltip" class="tooltip">
+                  可使用的符號：<br />
+                  r (Rg)，a (spin)，beta (ISCO β)，incl (傾角，弧度)，Rg，ISCO，photon，z。<br />
+                  每行格式：變數 = 表達式，如<br />
+                  doppler = sqrt((1+beta)/(1-beta))<br />
+                  inclination = 45<br />
+                  受支援操作：+ - * / () pow sqrt sin cos 等。<br />
+                  可拖曳視窗，點擊視窗即可關閉。
+                </div>
               </div>
             </div>
           </div>
-          <textarea id="formula-input" spellcheck="false">
-doppler = sqrt((1+beta)/(1-beta))
+          <textarea id="formula-input" spellcheck="false">doppler = sqrt((1+beta)/(1-beta))
 inclination = 45
-zoom = 10</textarea
-          >
+zoom = 10</textarea>
+          <div id="suggestion-list"></div>
           <div class="console-actions">
             <button id="apply-formula" class="pill-button active">套用結果</button>
             <button id="clear-formula" class="pill-button">重設文字</button>
@@ -707,6 +766,7 @@ zoom = 10</textarea
         elevation: document.querySelector('[data-display="elevation"]'),
         zoom: document.querySelector('[data-display="zoom"]'),
       };
+      const calcConsole = document.getElementById('calc-console');
       const telemetryRefs = {
         rg: document.getElementById('metric-rg'),
         isco: document.getElementById('metric-isco'),
@@ -716,13 +776,22 @@ zoom = 10</textarea
       };
       const formulaPanel = document.getElementById('formula-panel');
       const formulaInput = document.getElementById('formula-input');
+      const suggestionList = document.getElementById('suggestion-list');
       const formulaOutput = document.getElementById('formula-output');
+      const consoleFullscreen = document.getElementById('console-fullscreen');
       const consoleToggle = document.getElementById('console-toggle');
       const consoleInfo = document.getElementById('console-info');
       const consoleTooltip = document.getElementById('console-tooltip');
       const applyFormulaBtn = document.getElementById('apply-formula');
       const clearFormulaBtn = document.getElementById('clear-formula');
       let consoleLive = true;
+      const formulaSuggestions = [
+        { label: 'z = 1/sqrt(1 - 2/r + a^2/r^2) - 1', insert: 'z = 1/sqrt(1 - 2/r + a^2/r^2) - 1' },
+        { label: 'doppler = sqrt((1+beta)/(1-beta))', insert: 'doppler = sqrt((1+beta)/(1-beta))' },
+        { label: 'inclination = atan(beta) * 180 / PI', insert: 'inclination = atan(beta) * 180 / PI' },
+        { label: 'zoom = Rg / 1e9', insert: 'zoom = Rg / 1e9' },
+        { label: 'spin = min(0.998, spin + 0.01)', insert: 'spin = min(0.998, spin + 0.01)' }
+      ];
 
       // Audio State
       let audioCtx;
@@ -948,11 +1017,42 @@ zoom = 10</textarea
           consoleToggle.classList.toggle('active', consoleLive);
           consoleToggle.textContent = consoleLive ? 'LIVE' : 'PAUSE';
         });
+        if (consoleFullscreen) {
+          consoleFullscreen.addEventListener('click', () => {
+            const active = calcConsole.classList.toggle('fullscreen');
+            consoleFullscreen.textContent = active ? '⤺' : '⤢';
+          });
+        }
+        let tooltipDragging = false;
+        let dragOffset = { x: 0, y: 0 };
         consoleInfo.addEventListener('click', () => {
           consoleTooltip.classList.toggle('visible');
+          if (consoleTooltip.classList.contains('visible')) {
+            const rect = consoleInfo.getBoundingClientRect();
+            consoleTooltip.style.left = `${rect.right + 10}px`;
+            consoleTooltip.style.top = `${rect.top}px`;
+          }
         });
-        document.addEventListener('click', event => {
-          if (!consoleInfo.contains(event.target) && !consoleTooltip.contains(event.target)) {
+        consoleTooltip.addEventListener('pointerdown', event => {
+          tooltipDragging = true;
+          const rect = consoleTooltip.getBoundingClientRect();
+          dragOffset.x = event.clientX - rect.left;
+          dragOffset.y = event.clientY - rect.top;
+          consoleTooltip.style.cursor = 'grabbing';
+          consoleTooltip.setPointerCapture(event.pointerId);
+        });
+        consoleTooltip.addEventListener('pointermove', event => {
+          if (!tooltipDragging) return;
+          consoleTooltip.style.left = `${event.clientX - dragOffset.x}px`;
+          consoleTooltip.style.top = `${event.clientY - dragOffset.y}px`;
+        });
+        consoleTooltip.addEventListener('pointerup', event => {
+          tooltipDragging = false;
+          consoleTooltip.releasePointerCapture(event.pointerId);
+          consoleTooltip.style.cursor = 'grab';
+        });
+        consoleTooltip.addEventListener('click', () => {
+          if (!tooltipDragging) {
             consoleTooltip.classList.remove('visible');
           }
         });
@@ -963,6 +1063,19 @@ zoom = 10</textarea
           formulaInput.value = 'doppler = sqrt((1+beta)/(1-beta))\ninclination = 45\nzoom = 10';
           evaluateFormulas(false);
         });
+        formulaInput.addEventListener('input', () => updateSuggestionList());
+        formulaInput.addEventListener('keydown', event => {
+          if (event.key === 'Tab' && suggestionList && suggestionList.classList.contains('visible')) {
+            event.preventDefault();
+            const first = suggestionList.querySelector('.suggestion-item');
+            if (first) {
+              insertSuggestion(first.dataset.insert);
+            }
+          }
+        });
+        formulaInput.addEventListener('blur', () => {
+          setTimeout(() => suggestionList.classList.remove('visible'), 150);
+        });
       }
 
       function evaluateFormulas(applyUpdates = false) {
@@ -972,7 +1085,7 @@ zoom = 10</textarea
           formulaOutput.innerText = '輸入公式，如 doppler = sqrt((1+beta)/(1-beta))';
           return;
         }
-        const massSolar = params.mass * 1e8;
+        const massSolar = params.mass;
         const rg = gravitationalRadiusMeters(massSolar);
         const isco = iscoRadiusRg(params.spin);
         const photon = photonRadiusRg(params.spin);
@@ -1015,6 +1128,46 @@ zoom = 10</textarea
         if (applyUpdates) {
           applyFormulaAssignments(assignments);
         }
+      }
+
+      function updateSuggestionList() {
+        if (!suggestionList) return;
+        const caret = formulaInput.selectionStart;
+        const text = formulaInput.value.slice(0, caret);
+        const token = text.split(/[\s=()+\-*/]+/).pop();
+        if (!token || token.length < 2) {
+          suggestionList.classList.remove('visible');
+          return;
+        }
+        const matcher = token.toLowerCase();
+        const matches = formulaSuggestions.filter(item => item.label.toLowerCase().includes(matcher)).slice(0, 5);
+        if (matches.length === 0) {
+          suggestionList.classList.remove('visible');
+          return;
+        }
+        suggestionList.innerHTML = '';
+        matches.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'suggestion-item';
+          div.textContent = item.label;
+          div.dataset.insert = item.insert;
+          div.addEventListener('click', () => insertSuggestion(item.insert));
+          suggestionList.appendChild(div);
+        });
+        suggestionList.classList.add('visible');
+      }
+
+      function insertSuggestion(text) {
+        const caret = formulaInput.selectionStart;
+        const before = formulaInput.value.slice(0, caret);
+        const after = formulaInput.value.slice(formulaInput.selectionEnd);
+        const token = before.split(/[\s=()+\-*/]+/).pop() || '';
+        const newBefore = before.slice(0, before.length - token.length) + text;
+        formulaInput.value = newBefore + after;
+        const newCaret = newBefore.length;
+        formulaInput.setSelectionRange(newCaret, newCaret);
+        updateSuggestionList();
+        suggestionList.classList.remove('visible');
       }
 
       function applyFormulaAssignments(assignments) {
@@ -1086,7 +1239,7 @@ zoom = 10</textarea
       }
 
       function updateTelemetry() {
-        const massSolar = params.mass * 1e8;
+        const massSolar = params.mass;
         const massKg = massSolar * SOLAR_MASS;
         const rg = gravitationalRadiusMeters(massSolar);
         const isco = iscoRadiusRg(params.spin);
