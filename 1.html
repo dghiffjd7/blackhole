@@ -1053,6 +1053,9 @@ zoom = 10</textarea>
           let consoleOffset = { x: 0, y: 0 };
           calcConsole.addEventListener('pointerdown', event => {
             if (!calcConsole.classList.contains('fullscreen')) return;
+            const header = event.target.closest('.console-header');
+            const actionArea = event.target.closest('.header-actions');
+            if (!header || actionArea) return;
             consoleDragging = true;
             const rect = calcConsole.getBoundingClientRect();
             consoleOffset.x = event.clientX - rect.left;
