@@ -824,31 +824,47 @@ z = 1/√(1 - 2/r + a²/r²) - 1
         }
 
         let synth = window.speechSynthesis;
-        function speak(text) {
-            if (synth.speaking) {
-                console.error('speechSynthesis.speaking');
-                return;
-            }
-            
-            // Show subtitles
+        let availableVoices = synth ? synth.getVoices() : [];
+        if (synth) {
+            synth.onvoiceschanged = () => {
+                availableVoices = synth.getVoices();
+            };
+        }
+
+        function showSubtitle(text) {
             const subBox = document.getElementById('subtitle-text');
             subBox.innerText = text;
             subBox.style.opacity = 1;
+            setTimeout(() => {
+                subBox.style.opacity = 0;
+            }, 6000);
+        }
+
+        function speak(text) {
+            showSubtitle(text);
+
+            if (!synth) {
+                return;
+            }
+
+            if (synth.speaking) {
+                synth.cancel();
+            }
 
             const utterThis = new SpeechSynthesisUtterance(text);
             utterThis.pitch = 0.8;
             utterThis.rate = 0.9;
             utterThis.volume = 1.0;
-            
-            // Try to find a good English voice
-            let voices = synth.getVoices();
-            let preferredVoice = voices.find(v => v.name.includes("Google US English")) || voices.find(v => v.lang === 'en-US');
-            if(preferredVoice) utterThis.voice = preferredVoice;
-
-            utterThis.onend = function(event) {
-                setTimeout(() => { subBox.style.opacity = 0; }, 2000);
+            if (availableVoices.length === 0) {
+                availableVoices = synth.getVoices();
             }
-            
+            const preferredVoice =
+                availableVoices.find(v => v.name && v.name.includes("Google US English")) ||
+                availableVoices.find(v => v.lang && v.lang.startsWith('en')) ||
+                null;
+            if (preferredVoice) {
+                utterThis.voice = preferredVoice;
+            }
             synth.speak(utterThis);
         }
 
