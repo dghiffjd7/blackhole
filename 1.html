@@ -326,8 +326,8 @@
             position: fixed;
             top: 20px;
             left: 20px;
-            right: 20px;
-            bottom: 20px;
+            width: calc(100vw - 40px);
+            height: calc(100vh - 40px);
             z-index: 200;
             background: rgba(3, 5, 10, 0.95);
             border-width: 2px;
@@ -336,7 +336,7 @@
         }
 
         .calc-console.fullscreen #formula-input {
-            min-height: calc(100vh - 220px);
+            min-height: calc(100vh - 260px);
         }
 
         .header-actions {
@@ -1041,6 +1041,8 @@ zoom = 10</textarea>
             if (active) {
               calcConsole.style.left = '20px';
               calcConsole.style.top = '20px';
+              calcConsole.style.right = 'auto';
+              calcConsole.style.bottom = 'auto';
             } else {
               calcConsole.style.left = '';
               calcConsole.style.top = '';
