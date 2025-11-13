@@ -332,6 +332,7 @@
             background: rgba(3, 5, 10, 0.95);
             border-width: 2px;
             backdrop-filter: blur(6px);
+            cursor: grab;
         }
 
         .calc-console.fullscreen #formula-input {
@@ -545,13 +546,15 @@
               <div style="position: relative">
                 <button id="console-info" class="info-button">❗</button>
                 <div id="console-tooltip" class="tooltip">
-                  可使用的符號：<br />
-                  r (Rg)，a (spin)，beta (ISCO β)，incl (傾角，弧度)，Rg，ISCO，photon，z。<br />
-                  每行格式：變數 = 表達式，如<br />
-                  doppler = sqrt((1+beta)/(1-beta))<br />
+                  可用變數：r=光子球半徑 (Rg)、a=spin、beta=ISCO β、
+                  incl=傾角(弧度)、Rg=重力半徑、ISCO、photon、z=紅移。<br /><br />
+                  可用公式：doppler = sqrt((1+beta)/(1-beta))、period = 2π(Rg/c)(r^{3/2}+a) 等。<br />
+                  運算：+ - * / () pow sqrt sin cos tan log exp。<br /><br />
+                  指令範例：<br />
                   inclination = 45<br />
-                  受支援操作：+ - * / () pow sqrt sin cos 等。<br />
-                  可拖曳視窗，點擊視窗即可關閉。
+                  zoom = Rg / 5e9<br />
+                  doppler = sqrt((1+beta)/(1-beta))<br /><br />
+                  可拖曳此視窗，點擊視窗以收合。
                 </div>
               </div>
             </div>
@@ -1035,9 +1038,46 @@ zoom = 10</textarea>
           consoleFullscreen.addEventListener('click', () => {
             const active = calcConsole.classList.toggle('fullscreen');
             consoleFullscreen.textContent = active ? '⤺' : '⤢';
+            if (active) {
+              calcConsole.style.left = '20px';
+              calcConsole.style.top = '20px';
+            } else {
+              calcConsole.style.left = '';
+              calcConsole.style.top = '';
+              calcConsole.style.cursor = '';
+            }
+          });
+          let consoleDragging = false;
+          let consoleOffset = { x: 0, y: 0 };
+          calcConsole.addEventListener('pointerdown', event => {
+            if (!calcConsole.classList.contains('fullscreen')) return;
+            consoleDragging = true;
+            const rect = calcConsole.getBoundingClientRect();
+            consoleOffset.x = event.clientX - rect.left;
+            consoleOffset.y = event.clientY - rect.top;
+            calcConsole.setPointerCapture(event.pointerId);
+            calcConsole.style.cursor = 'grabbing';
+          });
+          calcConsole.addEventListener('pointermove', event => {
+            if (!consoleDragging) return;
+            calcConsole.style.left = `${event.clientX - consoleOffset.x}px`;
+            calcConsole.style.top = `${event.clientY - consoleOffset.y}px`;
+          });
+          calcConsole.addEventListener('pointerup', event => {
+            if (!consoleDragging) return;
+            consoleDragging = false;
+            calcConsole.releasePointerCapture(event.pointerId);
+            calcConsole.style.cursor = 'grab';
+          });
+          calcConsole.addEventListener('pointerleave', event => {
+            if (!consoleDragging) return;
+            consoleDragging = false;
+            calcConsole.releasePointerCapture(event.pointerId);
+            calcConsole.style.cursor = 'grab';
           });
         }
         let tooltipDragging = false;
+        let tooltipMoved = false;
         let dragOffset = { x: 0, y: 0 };
         consoleInfo.addEventListener('click', () => {
           consoleTooltip.classList.toggle('visible');
@@ -1049,6 +1089,7 @@ zoom = 10</textarea>
         });
         consoleTooltip.addEventListener('pointerdown', event => {
           tooltipDragging = true;
+          tooltipMoved = false;
           const rect = consoleTooltip.getBoundingClientRect();
           dragOffset.x = event.clientX - rect.left;
           dragOffset.y = event.clientY - rect.top;
@@ -1057,16 +1098,18 @@ zoom = 10</textarea>
         });
         consoleTooltip.addEventListener('pointermove', event => {
           if (!tooltipDragging) return;
+          tooltipMoved = true;
           consoleTooltip.style.left = `${event.clientX - dragOffset.x}px`;
           consoleTooltip.style.top = `${event.clientY - dragOffset.y}px`;
         });
         consoleTooltip.addEventListener('pointerup', event => {
+          if (!tooltipDragging) return;
           tooltipDragging = false;
           consoleTooltip.releasePointerCapture(event.pointerId);
           consoleTooltip.style.cursor = 'grab';
         });
         consoleTooltip.addEventListener('click', () => {
-          if (!tooltipDragging) {
+          if (!tooltipMoved) {
             consoleTooltip.classList.remove('visible');
           }
         });
