@@ -754,6 +754,17 @@ zoom = 10</textarea>
         angleX: 0,
         angleY: 0.2,
       };
+      const narrationClips = {
+        initial: new Audio('audio/Initial Narration.mp3'),
+        intro: new Audio('audio/narrate-intro.mp3'),
+        lensing: new Audio('audio/narrate-lensing.mp3'),
+        horizon: new Audio('audio/narrate-horizon.mp3'),
+      };
+      Object.values(narrationClips).forEach(clip => {
+        clip.preload = 'auto';
+        clip.crossOrigin = 'anonymous';
+        clip.volume = 0.85;
+      });
       const sliders = {};
       const displayRefs = {
         mass: document.querySelector('[data-display="mass"]'),
@@ -900,7 +911,7 @@ zoom = 10</textarea>
         animate();
 
         // Initial Narration
-        speak('Simulation Initialized. Viewing Target: Gargantua. A supermassive rotating black hole.');
+            playNarration('initial', 'Simulation Initialized. Viewing Target: Gargantua. A supermassive rotating black hole.');
       }
 
       function onResize() {
@@ -976,17 +987,20 @@ zoom = 10</textarea>
 
         // Audio Controls
         document.getElementById('narrate-intro').onclick = () =>
-          speak(
+          playNarration(
+            'intro',
             'Black holes are regions of spacetime where gravity is so strong that nothing, not even light, can escape. The boundary is called the Event Horizon.',
           );
 
         document.getElementById('narrate-lensing').onclick = () =>
-          speak(
+          playNarration(
+            'lensing',
             'Notice the halo of light. This is gravitational lensing. The gravity of the black hole bends light from the accretion disk behind it, making it appear above and below the shadow.',
           );
 
         document.getElementById('narrate-horizon').onclick = () =>
-          speak(
+          playNarration(
+            'horizon',
             'The accretion disk spins at relativistic speeds. Due to the Doppler effect, the side moving towards you appears brighter and bluer, while the receding side is dimmer and redder.',
           );
 
@@ -1325,14 +1339,6 @@ z = 1/√(1 - 2/r + a²/r²) - 1
         droneGain.gain.value = 0.3;
       }
 
-      let synth = window.speechSynthesis;
-      let availableVoices = synth ? synth.getVoices() : [];
-      if (synth) {
-        synth.onvoiceschanged = () => {
-          availableVoices = synth.getVoices();
-        };
-      }
-
       function showSubtitle(text) {
         const subBox = document.getElementById('subtitle-text');
         subBox.innerText = text;
@@ -1342,32 +1348,15 @@ z = 1/√(1 - 2/r + a²/r²) - 1
         }, 6000);
       }
 
-      function speak(text) {
+      function playNarration(id, text) {
         showSubtitle(text);
-
-        if (!synth) {
-          return;
-        }
-
-        if (synth.speaking) {
-          synth.cancel();
-        }
-
-        const utterThis = new SpeechSynthesisUtterance(text);
-        utterThis.pitch = 0.8;
-        utterThis.rate = 0.9;
-        utterThis.volume = 1.0;
-        if (availableVoices.length === 0) {
-          availableVoices = synth.getVoices();
-        }
-        const preferredVoice =
-          availableVoices.find(v => v.name && v.name.includes('Google US English')) ||
-          availableVoices.find(v => v.lang && v.lang.startsWith('en')) ||
-          null;
-        if (preferredVoice) {
-          utterThis.voice = preferredVoice;
-        }
-        synth.speak(utterThis);
+        const clip = narrationClips[id];
+        if (!clip) return;
+        Object.values(narrationClips).forEach(audio => {
+          audio.pause();
+          audio.currentTime = 0;
+        });
+        clip.play().catch(() => {});
       }
 
       // --- MAIN LOOP ---
