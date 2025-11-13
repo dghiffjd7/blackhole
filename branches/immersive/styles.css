@@ -1,0 +1,242 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500&display=swap");
+
+:root {
+  color-scheme: dark;
+  font-family: "Space Grotesk", "Noto Sans TC", system-ui, sans-serif;
+  --panel-bg: rgba(8, 12, 18, 0.92);
+  --border: rgba(255, 255, 255, 0.15);
+  --accent: #dca868;
+  --text: #f5f6ff;
+  --muted: #9db3d1;
+  --shadow: rgba(0, 0, 0, 0.45);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #03050a;
+  color: var(--text);
+  font-family: inherit;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+#immersive-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  background: radial-gradient(circle at top, #101421, #03050a 80%);
+}
+
+#ui-panel {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  width: min(360px, calc(100vw - 48px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 18px;
+  background: var(--panel-bg);
+  box-shadow: 0 25px 80px var(--shadow);
+  backdrop-filter: blur(8px);
+}
+
+#toggle-panel {
+  position: fixed;
+  top: 24px;
+  left: 400px;
+  z-index: 10;
+}
+
+.ghost-button {
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  padding: 10px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.ghost-button:hover {
+  background: var(--accent);
+  color: #000;
+}
+
+header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  font-size: 0.65rem;
+  color: var(--muted);
+  margin: 0 0 4px;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  letter-spacing: 0.08em;
+}
+
+.subtitle {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.label-row span {
+  color: var(--accent);
+}
+
+input[type="range"] {
+  width: 100%;
+  appearance: none;
+  background: transparent;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-top: -5px;
+  box-shadow: 0 0 6px rgba(220, 168, 104, 0.8);
+  cursor: pointer;
+}
+
+.control-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.button-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.button-row button {
+  flex: 1;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: border 0.2s ease, background 0.2s ease;
+}
+
+.button-row button:hover {
+  border-color: var(--accent);
+  background: rgba(220, 168, 104, 0.12);
+}
+
+.telemetry {
+  margin-top: 20px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  font-size: 0.85rem;
+}
+
+.telemetry div {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+}
+
+.telemetry strong {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.derivations {
+  margin-top: 24px;
+}
+
+.derivations h2 {
+  font-size: 0.95rem;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  margin: 0 0 12px;
+  text-transform: uppercase;
+}
+
+#derivation-panel {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(4, 6, 12, 0.9);
+  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.5;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+@media (max-width: 900px) {
+  #ui-panel {
+    width: calc(100vw - 32px);
+    left: 16px;
+    right: 16px;
+    max-height: 85vh;
+  }
+
+  #toggle-panel {
+    left: 16px;
+    top: 16px;
+  }
+
+  .control-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}

@@ -59,3 +59,15 @@ window.attachKerrWasmModule(Module());
 - 將 `wasm/solver.cpp` 編譯為 WASM 並串接 `KerrWasmBridge`，取代目前 shader 內的近似能量。
 - 擴充驗證腳本以讀取 WASM 求解資料並與解析解比對。
 - 加入更多觀測資料（時間延遲、Doppler 映射、磁場線）強化卡片資訊密度。
+
+## Immersive 分支版本
+
+`branches/immersive/` 提供一個全畫面實驗室介面（參考 `1.html` 的設計），可 360° 旋轉並顯示更完整的公式推導。若要在 Git 中建立對應分支：
+
+```bash
+git checkout -b immersive-lab
+git add branches/immersive
+git commit -m "Add immersive Gargantua lab variant"
+```
+
+部署時只需將 `branches/immersive/index.html`、`styles.css`、`main.js` 連同主卡一起上傳，即可在 `/branches/immersive/index.html` 看到新版 UI。該版本與主卡共用同一套 Kerr 參數計算，並另外顯示 Rg、ISCO、Photon sphere、紅移與 β 的公式推導，方便對照實際數值。

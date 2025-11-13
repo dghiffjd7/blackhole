@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gargantua: Relativistic Black Hole Simulation</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Courier New', Courier, monospace;
+            color: #fff;
+        }
+        
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #ui-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 300px;
+            background: rgba(10, 15, 20, 0.85);
+            border: 1px solid #445;
+            border-left: 4px solid #dca868; /* Interstellar Gold */
+            padding: 20px;
+            backdrop-filter: blur(5px);
+            pointer-events: auto;
+            user-select: none;
+            transition: transform 0.3s ease;
+        }
+
+        h1 {
+            font-size: 18px;
+            margin: 0 0 15px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #dca868;
+            border-bottom: 1px solid #445;
+            padding-bottom: 10px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            background: transparent;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            background: #445;
+            border-radius: 2px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: #dca868;
+            margin-top: -5px;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(220, 168, 104, 0.8);
+        }
+
+        button {
+            background: transparent;
+            border: 1px solid #dca868;
+            color: #dca868;
+            padding: 8px 12px;
+            font-family: inherit;
+            font-size: 11px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+        button:hover {
+            background: #dca868;
+            color: #000;
+            box-shadow: 0 0 10px rgba(220, 168, 104, 0.4);
+        }
+
+        button.active {
+            background: #dca868;
+            color: #000;
+        }
+
+        .telemetry {
+            margin-top: 20px;
+            border-top: 1px solid #334;
+            padding-top: 10px;
+            font-size: 10px;
+            color: #6f8;
+        }
+
+        .telemetry div {
+            margin-bottom: 3px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #start-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: opacity 1s;
+        }
+
+        #loader {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #333;
+            border-top: 2px solid #dca868;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        #subtitle-box {
+            position: absolute;
+            bottom: 40px;
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+        }
+        
+        #subtitle-text {
+            background: rgba(0,0,0,0.6);
+            color: #eee;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.5s;
+            display: inline-block;
+            max-width: 600px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Initial User Interaction Overlay -->
+    <div id="start-overlay">
+        <div id="loader"></div>
+        <h2 style="color: #dca868; font-weight: lighter; letter-spacing: 4px;">GARGANTUA</h2>
+        <p style="color: #666; font-size: 12px; margin-bottom: 30px;">WEBGL RELATIVISTIC RENDERING ENGINE</p>
+        <button id="init-btn" style="width: 200px;">INITIALIZE SIMULATION</button>
+    </div>
+
+    <!-- UI Panel -->
+    <div id="ui-container" class="hidden">
+        <h1>System Controls</h1>
+        
+        <div class="control-group">
+            <label>Black Hole Mass (Solar Masses)</label>
+            <input type="range" id="mass-slider" min="0.1" max="3.0" step="0.1" value="1.0">
+        </div>
+        
+        <div class="control-group">
+            <label>Accretion Disk Density</label>
+            <input type="range" id="density-slider" min="0.0" max="2.0" step="0.1" value="1.0">
+        </div>
+
+        <div class="control-group">
+            <label>Camera Zoom</label>
+            <input type="range" id="zoom-slider" min="2.0" max="15.0" step="0.1" value="8.0">
+        </div>
+
+        <h1 style="margin-top: 20px;">Data Logs / Audio</h1>
+        <button id="narrate-intro">Analytic: Introduction</button>
+        <button id="narrate-lensing">Analytic: Gravitational Lensing</button>
+        <button id="narrate-horizon">Analytic: Event Horizon</button>
+        <button id="toggle-ambience" class="active">Toggle Ambience</button>
+
+        <div class="telemetry">
+            <div><span>SPACETIME CURVATURE</span><span id="val-curve">NORMAL</span></div>
+            <div><span>PHOTON SPHERE</span><span id="val-photon">STABLE</span></div>
+            <div><span>RELATIVISTIC JETS</span><span>DETECTED</span></div>
+        </div>
+    </div>
+
+    <div id="subtitle-box"><div id="subtitle-text"></div></div>
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        /* * SHADER CODE
+         * This is where the physics happens. We use Raymarching with a twist.
+         * Instead of straight lines, rays bend towards the origin (0,0,0) based on 
+         * distance, simulating gravity.
+         */
+
+        const vertexShader = `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = vec4(position, 1.0);
+            }
+        `;
+
+        const fragmentShader = `
+            uniform float iTime;
+            uniform vec2 iResolution;
+            uniform vec3 iCameraPos;
+            uniform vec3 iCameraDir;
+            uniform vec3 iCameraUp;
+            uniform float iMass;
+            uniform float iDiskDensity;
+            
+            varying vec2 vUv;
+
+            #define MAX_STEPS 100
+            #define STEP_SIZE 0.05
+            #define MAX_DIST 50.0
+            #define PI 3.14159265
+
+            // 3D Noise for the accretion disk texture
+            float hash(float n) { return fract(sin(n) * 1e4); }
+            float noise(vec3 x) {
+                const vec3 step = vec3(110, 241, 171);
+                vec3 i = floor(x);
+                vec3 f = fract(x);
+                float n = dot(i, step);
+                vec3 u = f * f * (3.0 - 2.0 * f);
+                return mix(mix(mix(hash(n + dot(step, vec3(0, 0, 0))), hash(n + dot(step, vec3(1, 0, 0))), u.x),
+                            mix(hash(n + dot(step, vec3(0, 1, 0))), hash(n + dot(step, vec3(1, 1, 0))), u.x), u.y),
+                        mix(mix(hash(n + dot(step, vec3(0, 0, 1))), hash(n + dot(step, vec3(1, 0, 1))), u.x),
+                            mix(hash(n + dot(step, vec3(0, 1, 1))), hash(n + dot(step, vec3(1, 1, 1))), u.x), u.y), u.z);
+            }
+            
+            float fbm(vec3 p) {
+                float v = 0.0;
+                float a = 0.5;
+                vec3 shift = vec3(100);
+                for (int i = 0; i < 4; ++i) {
+                    v += a * noise(p);
+                    p = p * 2.0 + shift;
+                    a *= 0.5;
+                }
+                return v;
+            }
+
+            // Background stars texture
+            vec3 getBackground(vec3 dir) {
+                float n = pow(noise(dir * 200.0), 20.0) * 20.0; 
+                // Nebula clouds
+                float neb = fbm(dir * 3.0);
+                vec3 color = vec3(n) + vec3(neb * 0.05, neb * 0.02, neb * 0.06);
+                return color;
+            }
+
+            void main() {
+                vec2 uv = vUv * 2.0 - 1.0;
+                uv.x *= iResolution.x / iResolution.y;
+
+                // Camera System
+                vec3 camPos = iCameraPos;
+                vec3 forward = normalize(iCameraDir - iCameraPos);
+                vec3 right = normalize(cross(forward, iCameraUp));
+                vec3 up = cross(right, forward);
+                vec3 rd = normalize(forward + uv.x * right + uv.y * up);
+
+                vec3 p = camPos;
+                vec3 color = vec3(0.0);
+                float transmit = 1.0; // How much light passes through
+                
+                // Physics constants
+                float rs = 2.0 * iMass; // Schwarzschild radius
+                float accretionMin = rs * 1.5; // Photon sphere / ISCO approximation
+                float accretionMax = rs * 6.0;
+                
+                // Ray marching loop
+                for(int i = 0; i < MAX_STEPS; i++) {
+                    float r = length(p);
+                    
+                    // Event Horizon check
+                    if(r < rs) {
+                        transmit = 0.0;
+                        break; 
+                    }
+                    
+                    // Gravity Bending (Newtonian approx of GR for performance)
+                    // Force is roughly perpendicular to velocity towards center
+                    // We bend the ray direction towards the origin
+                    vec3 acc = -1.5 * p * iMass / dot(p, p); // Simplified Geodesic
+                    rd += acc * STEP_SIZE * 1.2; // Bend factor
+                    rd = normalize(rd);
+                    
+                    // Move ray
+                    p += rd * STEP_SIZE * r * 0.5; // Adaptive step size based on distance
+                    
+                    // Accretion Disk Rendering
+                    // We check if we crossed the Y plane (equator) or are very close
+                    float diskDist = abs(p.y);
+                    float radialDist = length(p.xz);
+                    
+                    if(radialDist > accretionMin && radialDist < accretionMax) {
+                        // Soft density based on height from plane
+                        float density = exp(-diskDist * 8.0) * iDiskDensity;
+                        
+                        if(density > 0.01) {
+                            // Coordinate for texture
+                            float angle = atan(p.z, p.x);
+                            // Rotate texture over time
+                            float rotation = iTime * 2.0 / (radialDist * 0.5); // Inner parts move faster (Keplerian)
+                            
+                            vec3 texPos = vec3(radialDist * 2.0, angle * 2.0 + rotation, 0.0);
+                            float noiseVal = fbm(texPos);
+                            
+                            // Temperature / Color gradient
+                            // Inner is hot (white/blue), outer is cool (orange/red)
+                            float temp = (1.0 - (radialDist - accretionMin)/(accretionMax - accretionMin));
+                            vec3 diskColor = mix(vec3(0.8, 0.1, 0.05), vec3(1.0, 0.9, 0.7), temp * temp);
+                            
+                            // Add noise detail
+                            diskColor *= (0.5 + 1.5 * noiseVal);
+                            
+                            // DOPPLER BEAMING
+                            // If the disk plasma at this point is moving towards camera -> Blue/Bright
+                            // Velocity vector of disk is tangent to circle
+                            vec3 diskVel = normalize(vec3(-p.z, 0.0, p.x));
+                            float doppler = dot(diskVel, rd); 
+                            // doppler > 0 means moving away (redder/dimmer), < 0 means towards (bluer/brighter)
+                            
+                            float beamIntensity = 1.0 - doppler * 0.6;
+                            beamIntensity = pow(beamIntensity, 3.0); // Sharpen the effect
+                            
+                            vec3 finalDiskColor = diskColor * density * beamIntensity * 0.15;
+                            
+                            // Redshift/Blueshift tinting
+                            if(doppler < 0.0) finalDiskColor += vec3(0.0, 0.0, 0.05) * -doppler; // Blue tint
+                            else finalDiskColor *= vec3(1.0, 0.8, 0.6); // Red shift
+                            
+                            color += finalDiskColor * transmit;
+                            transmit *= (1.0 - density * 0.1); // Light gets absorbed by volume
+                        }
+                    }
+                    
+                    if(r > MAX_DIST || transmit < 0.01) break;
+                }
+                
+                // Add background stars (distorted by the bent ray 'rd')
+                color += getBackground(rd) * transmit;
+                
+                // Bloom / Glow around the center
+                // Simple screen space glow based on final ray direction vs center
+                // This adds the "holy" feeling
+                
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `;
+
+        // --- JAVASCRIPT LOGIC ---
+
+        let scene, camera, renderer, material, mesh;
+        let startTime = Date.now();
+        let mouseX = 0, mouseY = 0;
+        
+        // Physics State
+        const params = {
+            mass: 1.0,
+            density: 1.0,
+            zoom: 8.0,
+            angleX: 0,
+            angleY: 0.2 // Slight tilt initially
+        };
+
+        // Audio State
+        let audioCtx;
+        let droneOscillators = [];
+        let droneGain;
+        let isAmbienceOn = true;
+
+        function init() {
+            // ThreeJS Setup
+            scene = new THREE.Scene();
+            
+            // We don't use a standard camera for rendering 3D objects, 
+            // but we use it to calculate the "eye" position for the shader.
+            camera = new THREE.Camera();
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Screen Quad
+            const geometry = new THREE.PlaneBufferGeometry(2, 2);
+            material = new THREE.ShaderMaterial({
+                vertexShader: vertexShader,
+                fragmentShader: fragmentShader,
+                uniforms: {
+                    iTime: { value: 0 },
+                    iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+                    iCameraPos: { value: new THREE.Vector3(0, 0, 10) },
+                    iCameraDir: { value: new THREE.Vector3(0, 0, 0) },
+                    iCameraUp: { value: new THREE.Vector3(0, 1, 0) },
+                    iMass: { value: 1.0 },
+                    iDiskDensity: { value: 1.0 }
+                }
+            });
+
+            mesh = new THREE.Mesh(geometry, material);
+            scene.add(mesh);
+
+            // Event Listeners
+            window.addEventListener('resize', onResize);
+            document.addEventListener('mousemove', onMouseMove);
+            
+            setupUI();
+            
+            // Initial overlay
+            document.getElementById('init-btn').addEventListener('click', startSimulation);
+        }
+
+        function startSimulation() {
+            document.getElementById('start-overlay').classList.add('hidden');
+            document.getElementById('ui-container').classList.remove('hidden');
+            
+            initAudio();
+            animate();
+            
+            // Initial Narration
+            speak("Simulation Initialized. Viewing Target: Gargantua. A supermassive rotating black hole.");
+        }
+
+        function onResize() {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            material.uniforms.iResolution.value.set(window.innerWidth, window.innerHeight);
+        }
+
+        function onMouseMove(e) {
+            // Map mouse to rotation angles
+            mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+            mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+        }
+
+        function setupUI() {
+            const massSlider = document.getElementById('mass-slider');
+            const densitySlider = document.getElementById('density-slider');
+            const zoomSlider = document.getElementById('zoom-slider');
+
+            massSlider.addEventListener('input', (e) => {
+                params.mass = parseFloat(e.target.value);
+                document.getElementById('val-curve').innerText = (params.mass > 2.0) ? "CRITICAL" : "NORMAL";
+            });
+            
+            densitySlider.addEventListener('input', (e) => {
+                params.density = parseFloat(e.target.value);
+            });
+
+            zoomSlider.addEventListener('input', (e) => {
+                params.zoom = parseFloat(e.target.value);
+            });
+
+            // Audio Controls
+            document.getElementById('narrate-intro').onclick = () => 
+                speak("Black holes are regions of spacetime where gravity is so strong that nothing, not even light, can escape. The boundary is called the Event Horizon.");
+            
+            document.getElementById('narrate-lensing').onclick = () => 
+                speak("Notice the halo of light. This is gravitational lensing. The gravity of the black hole bends light from the accretion disk behind it, making it appear above and below the shadow.");
+            
+            document.getElementById('narrate-horizon').onclick = () => 
+                speak("The accretion disk spins at relativistic speeds. Due to the Doppler effect, the side moving towards you appears brighter and bluer, while the receding side is dimmer and redder.");
+
+            document.getElementById('toggle-ambience').onclick = (e) => {
+                isAmbienceOn = !isAmbienceOn;
+                if(droneGain) {
+                    droneGain.gain.setTargetAtTime(isAmbienceOn ? 0.3 : 0, audioCtx.currentTime, 1.0);
+                }
+                e.target.classList.toggle('active');
+            };
+        }
+
+        // --- AUDIO SYSTEM ---
+        
+        function initAudio() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+            
+            // Create a deep space drone using FM synthesis
+            const osc1 = audioCtx.createOscillator();
+            const osc2 = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+
+            // Carrier
+            osc1.type = 'sine';
+            osc1.frequency.value = 50; // Low Rumble
+
+            // Modulator
+            osc2.type = 'sawtooth';
+            osc2.frequency.value = 0.2; // Slow modulation
+            const modGain = audioCtx.createGain();
+            modGain.gain.value = 20;
+
+            osc2.connect(modGain);
+            modGain.connect(osc1.frequency);
+
+            filter.type = 'lowpass';
+            filter.frequency.value = 200;
+
+            osc1.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc1.start();
+            osc2.start();
+            
+            droneGain = gain;
+            droneGain.gain.value = 0.3;
+        }
+
+        let synth = window.speechSynthesis;
+        function speak(text) {
+            if (synth.speaking) {
+                console.error('speechSynthesis.speaking');
+                return;
+            }
+            
+            // Show subtitles
+            const subBox = document.getElementById('subtitle-text');
+            subBox.innerText = text;
+            subBox.style.opacity = 1;
+
+            const utterThis = new SpeechSynthesisUtterance(text);
+            utterThis.pitch = 0.8;
+            utterThis.rate = 0.9;
+            utterThis.volume = 1.0;
+            
+            // Try to find a good English voice
+            let voices = synth.getVoices();
+            let preferredVoice = voices.find(v => v.name.includes("Google US English")) || voices.find(v => v.lang === 'en-US');
+            if(preferredVoice) utterThis.voice = preferredVoice;
+
+            utterThis.onend = function(event) {
+                setTimeout(() => { subBox.style.opacity = 0; }, 2000);
+            }
+            
+            synth.speak(utterThis);
+        }
+
+        // --- MAIN LOOP ---
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = (Date.now() - startTime) * 0.001;
+            
+            // Orbit Control Logic based on mouse
+            // Smooth damping
+            params.angleX += (mouseX * 2.0 - params.angleX) * 0.05;
+            params.angleY += (mouseY * 1.5 - params.angleY) * 0.05;
+
+            // Calculate Camera Position on Sphere
+            const radius = params.zoom;
+            const camX = radius * Math.sin(time * 0.1 + params.angleX) * Math.cos(params.angleY);
+            const camY = radius * Math.sin(params.angleY);
+            const camZ = radius * Math.cos(time * 0.1 + params.angleX) * Math.cos(params.angleY);
+
+            // Update Uniforms
+            material.uniforms.iTime.value = time;
+            material.uniforms.iCameraPos.value.set(camX, camY, camZ);
+            material.uniforms.iCameraDir.value.set(0, 0, 0); // Look at origin
+            
+            // Calculate dynamic UP vector to keep camera stable
+            // We construct a lookAt matrix manually logic for the shader
+            const forward = new THREE.Vector3(0,0,0).sub(new THREE.Vector3(camX, camY, camZ)).normalize();
+            const right = new THREE.Vector3(0,1,0).cross(forward).normalize();
+            const up = forward.clone().cross(right).normalize();
+            material.uniforms.iCameraUp.value.copy(up);
+            
+            material.uniforms.iMass.value = params.mass;
+            material.uniforms.iDiskDensity.value = params.density;
+
+            renderer.render(scene, camera);
+        }
+
+        init();
+
+    </script>
+</body>
+</html>

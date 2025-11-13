@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+    />
+    <title>Gargantua Lab — 交互式黑洞分支</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <canvas id="immersive-canvas" aria-label="Relativistic black hole render">
+      您的瀏覽器不支援 WebGL2
+    </canvas>
+
+    <button id="toggle-panel" class="ghost-button">收合控制台</button>
+
+    <aside id="ui-panel">
+      <header>
+        <p class="eyebrow">branch / immersive</p>
+        <h1>Gargantua 實驗室</h1>
+        <p class="subtitle">真實參數驅動 · 交互 360° 視角</p>
+      </header>
+
+      <section class="controls">
+        <div class="control-group">
+          <div class="label-row">
+            <label for="control-mass">質量 (10⁸ M☉)</label>
+            <span data-value="mass">6.5</span>
+          </div>
+          <input
+            id="control-mass"
+            type="range"
+            min="1"
+            max="15"
+            step="0.1"
+            value="6.5"
+          />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <label for="control-spin">自旋 a</label>
+            <span data-value="spin">0.998</span>
+          </div>
+          <input
+            id="control-spin"
+            type="range"
+            min="0.0"
+            max="0.998"
+            step="0.001"
+            value="0.998"
+          />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <label for="control-inclination">傾角 (°)</label>
+            <span data-value="inclination">60</span>
+          </div>
+          <input
+            id="control-inclination"
+            type="range"
+            min="0"
+            max="90"
+            step="0.5"
+            value="60"
+          />
+        </div>
+
+        <div class="control-grid">
+          <div class="control-group">
+            <div class="label-row">
+              <label for="control-azimuth">方位 (°)</label>
+              <span data-value="azimuth">0</span>
+            </div>
+            <input
+              id="control-azimuth"
+              type="range"
+              min="0"
+              max="360"
+              step="0.1"
+              value="0"
+            />
+          </div>
+          <div class="control-group">
+            <div class="label-row">
+              <label for="control-elevation">仰角 (°)</label>
+              <span data-value="elevation">359.8</span>
+            </div>
+            <input
+              id="control-elevation"
+              type="range"
+              min="0"
+              max="360"
+              step="0.1"
+              value="359.8"
+            />
+          </div>
+          <div class="control-group">
+            <div class="label-row">
+              <label for="control-zoom">縮放</label>
+              <span data-value="zoom">0.53</span>
+            </div>
+            <input
+              id="control-zoom"
+              type="range"
+              min="0.35"
+              max="2.5"
+              step="0.01"
+              value="0.53"
+            />
+          </div>
+        </div>
+
+        <div class="control-grid">
+          <div class="control-group">
+            <div class="label-row">
+              <label for="control-disk-width">盤寬 (Rg)</label>
+              <span data-value="diskWidth">12</span>
+            </div>
+            <input
+              id="control-disk-width"
+              type="range"
+              min="4"
+              max="30"
+              step="0.5"
+              value="12"
+            />
+          </div>
+          <div class="control-group">
+            <div class="label-row">
+              <label for="control-disk-temp">盤面溫度</label>
+              <span data-value="diskTemp">1.1</span>
+            </div>
+            <input
+              id="control-disk-temp"
+              type="range"
+              min="0.6"
+              max="1.8"
+              step="0.02"
+              value="1.1"
+            />
+          </div>
+          <div class="control-group">
+            <div class="label-row">
+              <label for="control-beam">Doppler</label>
+              <span data-value="doppler">1.5</span>
+            </div>
+            <input
+              id="control-beam"
+              type="range"
+              min="0.5"
+              max="3"
+              step="0.05"
+              value="1.5"
+            />
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button id="btn-reset">重置參數</button>
+          <button id="btn-sync-main">回到主卡</button>
+        </div>
+      </section>
+
+      <section class="telemetry">
+        <div>
+          <span>重力半徑</span>
+          <strong id="metric-rg">--</strong>
+        </div>
+        <div>
+          <span>ISCO</span>
+          <strong id="metric-isco">--</strong>
+        </div>
+        <div>
+          <span>Photon Sphere</span>
+          <strong id="metric-photon">--</strong>
+        </div>
+        <div>
+          <span>紅移 z</span>
+          <strong id="metric-redshift">--</strong>
+        </div>
+        <div>
+          <span>β (ISCO)</span>
+          <strong id="metric-beta">--</strong>
+        </div>
+      </section>
+
+      <section class="derivations">
+        <h2>Complex Parameters</h2>
+        <div id="derivation-panel"></div>
+      </section>
+    </aside>
+
+    <script type="module" src="main.js"></script>
+  </body>
+</html>
