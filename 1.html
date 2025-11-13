@@ -105,6 +105,52 @@
             color: #000;
         }
 
+        .tab-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            border: 1px solid #445;
+            background: rgba(10, 15, 20, 0.6);
+            color: #aaa;
+            padding: 6px 10px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .tab-btn.active {
+            border-color: #dca868;
+            color: #000;
+            background: #dca868;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .control-group label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .control-group label span {
+            color: #dca868;
+            font-size: 11px;
+        }
+
         .telemetry {
             margin-top: 20px;
             border-top: 1px solid #334;
@@ -117,6 +163,26 @@
             margin-bottom: 3px;
             display: flex;
             justify-content: space-between;
+        }
+
+        .telemetry.detailed span {
+            color: #aaa;
+        }
+
+        .telemetry.detailed span:last-child {
+            color: #dca868;
+        }
+
+        #formula-panel {
+            border: 1px solid #334;
+            padding: 10px;
+            margin-top: 12px;
+            font-size: 10px;
+            color: #9fb7d0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.4);
+            white-space: pre-line;
         }
 
         #start-overlay {
@@ -184,33 +250,81 @@
 
     <!-- UI Panel -->
     <div id="ui-container" class="hidden">
-        <h1>System Controls</h1>
-        
-        <div class="control-group">
-            <label>Black Hole Mass (Solar Masses)</label>
-            <input type="range" id="mass-slider" min="0.1" max="3.0" step="0.1" value="1.0">
-        </div>
-        
-        <div class="control-group">
-            <label>Accretion Disk Density</label>
-            <input type="range" id="density-slider" min="0.0" max="2.0" step="0.1" value="1.0">
+        <div class="tab-bar">
+            <button class="tab-btn active" data-tab="controls">System Controls</button>
+            <button class="tab-btn" data-tab="telemetry">Relativistic Data</button>
         </div>
 
-        <div class="control-group">
-            <label>Camera Zoom</label>
-            <input type="range" id="zoom-slider" min="2.0" max="15.0" step="0.1" value="8.0">
+        <div class="tab-panel active" id="controls-panel">
+            <h1>System Controls</h1>
+            <div class="control-group">
+                <label>Black Hole Mass (Solar Masses) <span data-display="mass">1.0</span></label>
+                <input type="range" id="mass-slider" min="0.1" max="3.0" step="0.1" value="1.0">
+            </div>
+            
+            <div class="control-group">
+                <label>Spin Parameter a <span data-display="spin">0.95</span></label>
+                <input type="range" id="spin-slider" min="0.0" max="0.998" step="0.001" value="0.95">
+            </div>
+
+            <div class="control-group">
+                <label>Accretion Disk Density <span data-display="density">1.0</span></label>
+                <input type="range" id="density-slider" min="0.0" max="2.0" step="0.1" value="1.0">
+            </div>
+
+            <div class="control-group">
+                <label>Observer Inclination (°) <span data-display="inclination">60</span></label>
+                <input type="range" id="inclination-slider" min="0" max="90" step="1" value="60">
+            </div>
+
+            <div class="control-group">
+                <label>Doppler Boost <span data-display="doppler">1.5</span></label>
+                <input type="range" id="doppler-slider" min="0.5" max="3.0" step="0.05" value="1.5">
+            </div>
+
+            <div class="control-group">
+                <label>Disk Temperature / Exposure <span data-display="exposure">1.1</span></label>
+                <input type="range" id="exposure-slider" min="0.6" max="1.6" step="0.02" value="1.1">
+            </div>
+
+            <div class="control-group">
+                <label>Camera Azimuth (°) <span data-display="azimuth">0</span></label>
+                <input type="range" id="azimuth-slider" min="0" max="360" step="0.1" value="0">
+            </div>
+
+            <div class="control-group">
+                <label>Camera Elevation (°) <span data-display="elevation">20</span></label>
+                <input type="range" id="elevation-slider" min="0" max="360" step="0.1" value="20">
+            </div>
+
+            <div class="control-group">
+                <label>Camera Zoom <span data-display="zoom">8.0</span></label>
+                <input type="range" id="zoom-slider" min="2.0" max="15.0" step="0.1" value="8.0">
+            </div>
+
+            <h1 style="margin-top: 20px;">Data Logs / Audio</h1>
+            <button id="narrate-intro">Analytic: Introduction</button>
+            <button id="narrate-lensing">Analytic: Gravitational Lensing</button>
+            <button id="narrate-horizon">Analytic: Event Horizon</button>
+            <button id="toggle-ambience" class="active">Toggle Ambience</button>
+
+            <div class="telemetry">
+                <div><span>SPACETIME CURVATURE</span><span id="val-curve">NORMAL</span></div>
+                <div><span>PHOTON SPHERE</span><span id="val-photon">STABLE</span></div>
+                <div><span>RELATIVISTIC JETS</span><span>DETECTED</span></div>
+            </div>
         </div>
 
-        <h1 style="margin-top: 20px;">Data Logs / Audio</h1>
-        <button id="narrate-intro">Analytic: Introduction</button>
-        <button id="narrate-lensing">Analytic: Gravitational Lensing</button>
-        <button id="narrate-horizon">Analytic: Event Horizon</button>
-        <button id="toggle-ambience" class="active">Toggle Ambience</button>
-
-        <div class="telemetry">
-            <div><span>SPACETIME CURVATURE</span><span id="val-curve">NORMAL</span></div>
-            <div><span>PHOTON SPHERE</span><span id="val-photon">STABLE</span></div>
-            <div><span>RELATIVISTIC JETS</span><span>DETECTED</span></div>
+        <div class="tab-panel" id="telemetry-panel">
+            <h1>Relativistic Parameters</h1>
+            <div class="telemetry detailed">
+                <div><span>Gravitational Radius R<sub>g</sub></span><span id="metric-rg">--</span></div>
+                <div><span>ISCO Radius</span><span id="metric-isco">--</span></div>
+                <div><span>Photon Sphere</span><span id="metric-photon">--</span></div>
+                <div><span>Redshift z</span><span id="metric-redshift">--</span></div>
+                <div><span>β (ISCO)</span><span id="metric-beta">--</span></div>
+            </div>
+            <pre id="formula-panel"></pre>
         </div>
     </div>
 
@@ -242,6 +356,10 @@
             uniform vec3 iCameraUp;
             uniform float iMass;
             uniform float iDiskDensity;
+            uniform float iSpin;
+            uniform float iInclination;
+            uniform float iExposure;
+            uniform float iDoppler;
             
             varying vec2 vUv;
 
@@ -331,44 +449,30 @@
                     float radialDist = length(p.xz);
                     
                     if(radialDist > accretionMin && radialDist < accretionMax) {
-                        // Soft density based on height from plane
-                        float density = exp(-diskDist * 8.0) * iDiskDensity;
+                        float density = exp(-diskDist * 8.0) * iDiskDensity * mix(0.9, 1.2, iSpin);
                         
                         if(density > 0.01) {
-                            // Coordinate for texture
                             float angle = atan(p.z, p.x);
-                            // Rotate texture over time
-                            float rotation = iTime * 2.0 / (radialDist * 0.5); // Inner parts move faster (Keplerian)
+                            float rotation = iTime * (1.5 + iSpin) / (radialDist * 0.4);
                             
                             vec3 texPos = vec3(radialDist * 2.0, angle * 2.0 + rotation, 0.0);
                             float noiseVal = fbm(texPos);
                             
-                            // Temperature / Color gradient
-                            // Inner is hot (white/blue), outer is cool (orange/red)
                             float temp = (1.0 - (radialDist - accretionMin)/(accretionMax - accretionMin));
-                            vec3 diskColor = mix(vec3(0.8, 0.1, 0.05), vec3(1.0, 0.9, 0.7), temp * temp);
+                            vec3 diskColor = mix(vec3(0.8, 0.15, 0.08), vec3(1.1, 0.92, 0.72), temp * temp);
+                            diskColor *= (0.5 + 1.5 * noiseVal) * iExposure;
                             
-                            // Add noise detail
-                            diskColor *= (0.5 + 1.5 * noiseVal);
-                            
-                            // DOPPLER BEAMING
-                            // If the disk plasma at this point is moving towards camera -> Blue/Bright
-                            // Velocity vector of disk is tangent to circle
                             vec3 diskVel = normalize(vec3(-p.z, 0.0, p.x));
-                            float doppler = dot(diskVel, rd); 
-                            // doppler > 0 means moving away (redder/dimmer), < 0 means towards (bluer/brighter)
-                            
-                            float beamIntensity = 1.0 - doppler * 0.6;
-                            beamIntensity = pow(beamIntensity, 3.0); // Sharpen the effect
+                            float doppler = dot(diskVel, rd) * sin(iInclination);
+                            float beamIntensity = pow(clamp(1.0 - doppler * 0.6 * iDoppler, 0.1, 2.5), 3.0);
                             
                             vec3 finalDiskColor = diskColor * density * beamIntensity * 0.15;
                             
-                            // Redshift/Blueshift tinting
-                            if(doppler < 0.0) finalDiskColor += vec3(0.0, 0.0, 0.05) * -doppler; // Blue tint
-                            else finalDiskColor *= vec3(1.0, 0.8, 0.6); // Red shift
+                            if(doppler < 0.0) finalDiskColor += vec3(0.02, 0.05, 0.12) * -doppler;
+                            else finalDiskColor *= vec3(1.0, 0.82, 0.65);
                             
                             color += finalDiskColor * transmit;
-                            transmit *= (1.0 - density * 0.1); // Light gets absorbed by volume
+                            transmit *= (1.0 - density * 0.1);
                         }
                     }
                     
@@ -377,6 +481,8 @@
                 
                 // Add background stars (distorted by the bent ray 'rd')
                 color += getBackground(rd) * transmit;
+                color = vec3(1.0) - exp(-color * (0.85 + 0.35 * iExposure));
+                color = pow(color, vec3(0.92));
                 
                 // Bloom / Glow around the center
                 // Simple screen space glow based on final ray direction vs center
@@ -397,15 +503,82 @@
             mass: 1.0,
             density: 1.0,
             zoom: 8.0,
+            spin: 0.95,
+            inclination: 60,
+            doppler: 1.5,
+            exposure: 1.1,
+            azimuthBase: 0,
+            elevationBase: 20,
             angleX: 0,
-            angleY: 0.2 // Slight tilt initially
+            angleY: 0.2
         };
+        const displayRefs = {
+            mass: document.querySelector('[data-display="mass"]'),
+            spin: document.querySelector('[data-display="spin"]'),
+            density: document.querySelector('[data-display="density"]'),
+            inclination: document.querySelector('[data-display="inclination"]'),
+            doppler: document.querySelector('[data-display="doppler"]'),
+            exposure: document.querySelector('[data-display="exposure"]'),
+            azimuth: document.querySelector('[data-display="azimuth"]'),
+            elevation: document.querySelector('[data-display="elevation"]'),
+            zoom: document.querySelector('[data-display="zoom"]')
+        };
+        const telemetryRefs = {
+            rg: document.getElementById('metric-rg'),
+            isco: document.getElementById('metric-isco'),
+            photon: document.getElementById('metric-photon'),
+            redshift: document.getElementById('metric-redshift'),
+            beta: document.getElementById('metric-beta')
+        };
+        const formulaPanel = document.getElementById('formula-panel');
 
         // Audio State
         let audioCtx;
         let droneOscillators = [];
         let droneGain;
         let isAmbienceOn = true;
+
+        const updateDisplay = (key, value, digits = 2) => {
+            if (displayRefs[key]) {
+                displayRefs[key].innerText = Number(value).toFixed(digits);
+            }
+        };
+
+        const SOLAR_MASS = 1.98847e30;
+        const G = 6.67430e-11;
+        const C = 299792458;
+
+        function gravitationalRadiusMeters(massSolar) {
+            return (2 * G * massSolar * SOLAR_MASS) / (C * C);
+        }
+
+        function iscoRadiusRg(spin) {
+            const a = Math.min(Math.max(spin, -0.998), 0.998);
+            const term = Math.cbrt(1 - a * a);
+            const z1 = 1 + term * (Math.cbrt(1 + a) + Math.cbrt(1 - a));
+            const z2 = Math.sqrt(3 * a * a + z1 * z1);
+            const sign = a >= 0 ? 1 : -1;
+            return 3 + z2 - sign * Math.sqrt((3 - z1) * (3 + z1 + 2 * z2));
+        }
+
+        function photonRadiusRg(spin) {
+            const a = Math.abs(Math.min(Math.max(spin, -0.999), 0.999));
+            const angle = (2 / 3) * Math.acos(-a);
+            return 2 * (1 + Math.cos(angle));
+        }
+
+        function gravitationalRedshiftRg(rRg, spin) {
+            const r = Math.max(rRg, 1.0001);
+            const a = Math.min(Math.max(spin, -0.998), 0.998);
+            const gm = 1 - 2 / r + (a * a) / (r * r);
+            return 1 / Math.sqrt(Math.max(gm, 1e-6)) - 1;
+        }
+
+        function orbitalBeta(rRg, spin) {
+            const r = Math.max(rRg, 1.0001);
+            const omega = 1 / (Math.pow(r, 1.5) + spin);
+            return Math.min(Math.abs((r * omega) / C), 0.99);
+        }
 
         function init() {
             // ThreeJS Setup
@@ -431,7 +604,11 @@
                     iCameraDir: { value: new THREE.Vector3(0, 0, 0) },
                     iCameraUp: { value: new THREE.Vector3(0, 1, 0) },
                     iMass: { value: 1.0 },
-                    iDiskDensity: { value: 1.0 }
+                    iDiskDensity: { value: 1.0 },
+                    iSpin: { value: params.spin },
+                    iInclination: { value: THREE.MathUtils.degToRad(params.inclination) },
+                    iExposure: { value: params.exposure },
+                    iDoppler: { value: params.doppler }
                 }
             });
 
@@ -443,6 +620,7 @@
             document.addEventListener('mousemove', onMouseMove);
             
             setupUI();
+            setupTabs();
             
             // Initial overlay
             document.getElementById('init-btn').addEventListener('click', startSimulation);
@@ -474,18 +652,60 @@
             const massSlider = document.getElementById('mass-slider');
             const densitySlider = document.getElementById('density-slider');
             const zoomSlider = document.getElementById('zoom-slider');
+            const spinSlider = document.getElementById('spin-slider');
+            const inclinationSlider = document.getElementById('inclination-slider');
+            const dopplerSlider = document.getElementById('doppler-slider');
+            const exposureSlider = document.getElementById('exposure-slider');
+            const azimuthSlider = document.getElementById('azimuth-slider');
+            const elevationSlider = document.getElementById('elevation-slider');
 
             massSlider.addEventListener('input', (e) => {
                 params.mass = parseFloat(e.target.value);
+                updateDisplay('mass', params.mass);
                 document.getElementById('val-curve').innerText = (params.mass > 2.0) ? "CRITICAL" : "NORMAL";
+                updateTelemetry();
             });
             
             densitySlider.addEventListener('input', (e) => {
                 params.density = parseFloat(e.target.value);
+                updateDisplay('density', params.density);
             });
 
             zoomSlider.addEventListener('input', (e) => {
                 params.zoom = parseFloat(e.target.value);
+                updateDisplay('zoom', params.zoom, 1);
+            });
+
+            spinSlider.addEventListener('input', (e) => {
+                params.spin = parseFloat(e.target.value);
+                updateDisplay('spin', params.spin, 3);
+                updateTelemetry();
+            });
+
+            inclinationSlider.addEventListener('input', (e) => {
+                params.inclination = parseFloat(e.target.value);
+                updateDisplay('inclination', params.inclination, 1);
+                updateTelemetry();
+            });
+
+            dopplerSlider.addEventListener('input', (e) => {
+                params.doppler = parseFloat(e.target.value);
+                updateDisplay('doppler', params.doppler, 2);
+            });
+
+            exposureSlider.addEventListener('input', (e) => {
+                params.exposure = parseFloat(e.target.value);
+                updateDisplay('exposure', params.exposure, 2);
+            });
+
+            azimuthSlider.addEventListener('input', (e) => {
+                params.azimuthBase = parseFloat(e.target.value);
+                updateDisplay('azimuth', params.azimuthBase, 1);
+            });
+
+            elevationSlider.addEventListener('input', (e) => {
+                params.elevationBase = parseFloat(e.target.value);
+                updateDisplay('elevation', params.elevationBase, 1);
             });
 
             // Audio Controls
@@ -505,6 +725,63 @@
                 }
                 e.target.classList.toggle('active');
             };
+
+            updateDisplay('mass', params.mass);
+            updateDisplay('spin', params.spin, 3);
+            updateDisplay('density', params.density);
+            updateDisplay('inclination', params.inclination, 1);
+            updateDisplay('doppler', params.doppler, 2);
+            updateDisplay('exposure', params.exposure, 2);
+            updateDisplay('azimuth', params.azimuthBase, 1);
+            updateDisplay('elevation', params.elevationBase, 1);
+            updateDisplay('zoom', params.zoom, 1);
+            updateTelemetry();
+        }
+
+        function setupTabs() {
+            const buttons = document.querySelectorAll('.tab-btn');
+            const panels = document.querySelectorAll('.tab-panel');
+            buttons.forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    buttons.forEach((b) => b.classList.remove('active'));
+                    panels.forEach((panel) => panel.classList.remove('active'));
+                    btn.classList.add('active');
+                    const target = btn.dataset.tab;
+                    document.getElementById(`${target}-panel`).classList.add('active');
+                });
+            });
+        }
+
+        function updateTelemetry() {
+            const massSolar = params.mass * 1e8;
+            const massKg = massSolar * SOLAR_MASS;
+            const rg = gravitationalRadiusMeters(massSolar);
+            const isco = iscoRadiusRg(params.spin);
+            const photon = photonRadiusRg(params.spin);
+            const redshift = gravitationalRedshiftRg(photon + 0.05, params.spin);
+            const beta = orbitalBeta(isco, params.spin);
+
+            if(telemetryRefs.rg) telemetryRefs.rg.innerText = `${rg.toExponential(3)} m`;
+            if(telemetryRefs.isco) telemetryRefs.isco.innerText = `${isco.toFixed(3)} Rg`;
+            if(telemetryRefs.photon) telemetryRefs.photon.innerText = `${photon.toFixed(3)} Rg`;
+            if(telemetryRefs.redshift) telemetryRefs.redshift.innerText = redshift.toFixed(4);
+            if(telemetryRefs.beta) telemetryRefs.beta.innerText = beta.toFixed(4);
+
+            if(formulaPanel) {
+                formulaPanel.innerText = `
+R_g = 2GM/c²
+    = 2 × ${G} × ${massKg.toExponential(3)} / ${C}²
+    = ${rg.toExponential(4)} m
+
+r_ISCO(a=${params.spin.toFixed(3)}) = ${isco.toFixed(4)} R_g
+r_ph = 2[1 + cos(2/3·acos(-|a|))] = ${photon.toFixed(4)} R_g
+
+z = 1/√(1 - 2/r + a²/r²) - 1
+    r = r_ph + 0.05 → z = ${redshift.toFixed(4)}
+
+β = r·ω/c,  ω = 1/(r^{3/2} + a) → β = ${beta.toFixed(4)}
+                `;
+            }
         }
 
         // --- AUDIO SYSTEM ---
@@ -589,9 +866,13 @@
 
             // Calculate Camera Position on Sphere
             const radius = params.zoom;
-            const camX = radius * Math.sin(time * 0.1 + params.angleX) * Math.cos(params.angleY);
-            const camY = radius * Math.sin(params.angleY);
-            const camZ = radius * Math.cos(time * 0.1 + params.angleX) * Math.cos(params.angleY);
+            const baseAz = THREE.MathUtils.degToRad(params.azimuthBase);
+            const baseEl = THREE.MathUtils.degToRad(params.elevationBase);
+            const camAz = time * 0.1 + params.angleX + baseAz;
+            const camEl = params.angleY + baseEl;
+            const camX = radius * Math.sin(camAz) * Math.cos(camEl);
+            const camY = radius * Math.sin(camEl);
+            const camZ = radius * Math.cos(camAz) * Math.cos(camEl);
 
             // Update Uniforms
             material.uniforms.iTime.value = time;
@@ -607,6 +888,10 @@
             
             material.uniforms.iMass.value = params.mass;
             material.uniforms.iDiskDensity.value = params.density;
+            material.uniforms.iSpin.value = params.spin;
+            material.uniforms.iInclination.value = THREE.MathUtils.degToRad(params.inclination);
+            material.uniforms.iExposure.value = params.exposure;
+            material.uniforms.iDoppler.value = params.doppler;
 
             renderer.render(scene, camera);
         }
