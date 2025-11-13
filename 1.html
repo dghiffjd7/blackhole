@@ -1,331 +1,513 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gargantua: Relativistic Black Hole Simulation</title>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: #000;
-            font-family: 'Courier New', Courier, monospace;
-            color: #fff;
-        }
-        
-        canvas {
-            display: block;
-            width: 100vw;
-            height: 100vh;
-        }
+      body {
+        margin: 0;
+        overflow: hidden;
+        background-color: #000;
+        font-family: 'Courier New', Courier, monospace;
+        color: #fff;
+      }
 
-        #ui-container {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            width: 300px;
-            background: rgba(10, 15, 20, 0.85);
-            border: 1px solid #445;
-            border-left: 4px solid #dca868; /* Interstellar Gold */
-            padding: 20px;
-            backdrop-filter: blur(5px);
-            pointer-events: auto;
-            user-select: none;
-            transition: transform 0.3s ease;
-        }
+      canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+      }
 
-        h1 {
-            font-size: 18px;
-            margin: 0 0 15px 0;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: #dca868;
-            border-bottom: 1px solid #445;
-            padding-bottom: 10px;
-        }
+      #ui-container {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        width: 300px;
+        background: rgba(10, 15, 20, 0.85);
+        border: 1px solid #445;
+        border-left: 4px solid #dca868; /* Interstellar Gold */
+        padding: 20px;
+        backdrop-filter: blur(5px);
+        pointer-events: auto;
+        user-select: none;
+        transition: transform 0.3s ease;
+      }
 
-        .control-group {
-            margin-bottom: 15px;
-        }
+      h1 {
+        font-size: 18px;
+        margin: 0 0 15px 0;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #dca868;
+        border-bottom: 1px solid #445;
+        padding-bottom: 10px;
+      }
 
-        label {
-            display: block;
-            font-size: 12px;
-            color: #aaa;
-            margin-bottom: 5px;
-        }
+      .control-group {
+        margin-bottom: 15px;
+      }
 
-        input[type="range"] {
-            width: 100%;
-            background: transparent;
-            -webkit-appearance: none;
-        }
+      label {
+        display: block;
+        font-size: 12px;
+        color: #aaa;
+        margin-bottom: 5px;
+      }
 
-        input[type="range"]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 4px;
-            background: #445;
-            border-radius: 2px;
-        }
+      input[type='range'] {
+        width: 100%;
+        background: transparent;
+        -webkit-appearance: none;
+      }
 
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 14px;
-            width: 14px;
-            border-radius: 50%;
-            background: #dca868;
-            margin-top: -5px;
-            cursor: pointer;
-            box-shadow: 0 0 5px rgba(220, 168, 104, 0.8);
-        }
+      input[type='range']::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 4px;
+        background: #445;
+        border-radius: 2px;
+      }
 
-        button {
-            background: transparent;
-            border: 1px solid #dca868;
-            color: #dca868;
-            padding: 8px 12px;
-            font-family: inherit;
-            font-size: 11px;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.2s;
-            width: 100%;
-            margin-bottom: 5px;
-        }
+      input[type='range']::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 14px;
+        width: 14px;
+        border-radius: 50%;
+        background: #dca868;
+        margin-top: -5px;
+        cursor: pointer;
+        box-shadow: 0 0 5px rgba(220, 168, 104, 0.8);
+      }
 
-        button:hover {
-            background: #dca868;
-            color: #000;
-            box-shadow: 0 0 10px rgba(220, 168, 104, 0.4);
-        }
+      button {
+        background: transparent;
+        border: 1px solid #dca868;
+        color: #dca868;
+        padding: 8px 12px;
+        font-family: inherit;
+        font-size: 11px;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.2s;
+        width: 100%;
+        margin-bottom: 5px;
+      }
 
-        button.active {
-            background: #dca868;
-            color: #000;
-        }
+      button:hover {
+        background: #dca868;
+        color: #000;
+        box-shadow: 0 0 10px rgba(220, 168, 104, 0.4);
+      }
 
-        .tab-bar {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
+      button.active {
+        background: #dca868;
+        color: #000;
+      }
 
-        .tab-btn {
-            flex: 1;
-            border: 1px solid #445;
-            background: rgba(10, 15, 20, 0.6);
-            color: #aaa;
-            padding: 6px 10px;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
-            transition: background 0.2s ease, color 0.2s ease;
-        }
+      .tab-bar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
 
-        .tab-btn.active {
-            border-color: #dca868;
-            color: #000;
-            background: #dca868;
-        }
+      .tab-btn {
+        flex: 1;
+        border: 1px solid #445;
+        background: rgba(10, 15, 20, 0.6);
+        color: #aaa;
+        padding: 6px 10px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: background 0.2s ease, color 0.2s ease;
+      }
 
-        .tab-panel {
-            display: none;
-        }
+      .tab-btn.active {
+        border-color: #dca868;
+        color: #000;
+        background: #dca868;
+      }
 
-        .tab-panel.active {
-            display: block;
-        }
+      .tab-panel {
+        display: none;
+      }
 
-        .control-group label {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 12px;
-            color: #aaa;
-        }
+      .tab-panel.active {
+        display: block;
+      }
 
-        .control-group label span {
-            color: #dca868;
-            font-size: 11px;
-        }
+      .control-group label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+        color: #aaa;
+      }
 
-        .telemetry {
-            margin-top: 20px;
-            border-top: 1px solid #334;
-            padding-top: 10px;
-            font-size: 10px;
-            color: #6f8;
-        }
+      .control-group label span {
+        color: #dca868;
+        font-size: 11px;
+      }
 
-        .telemetry div {
-            margin-bottom: 3px;
-            display: flex;
-            justify-content: space-between;
-        }
+      .telemetry {
+        margin-top: 20px;
+        border-top: 1px solid #334;
+        padding-top: 10px;
+        font-size: 10px;
+        color: #6f8;
+      }
 
-        .telemetry.detailed span {
-            color: #aaa;
-        }
+      .telemetry div {
+        margin-bottom: 3px;
+        display: flex;
+        justify-content: space-between;
+      }
 
-        .telemetry.detailed span:last-child {
-            color: #dca868;
-        }
+      .telemetry.detailed span {
+        color: #aaa;
+      }
 
-        #formula-panel {
-            border: 1px solid #334;
-            padding: 10px;
-            margin-top: 12px;
-            font-size: 10px;
-            color: #9fb7d0;
-            max-height: 200px;
-            overflow-y: auto;
-            background: rgba(0, 0, 0, 0.4);
-            white-space: pre-line;
-        }
+      .telemetry.detailed span:last-child {
+        color: #dca868;
+      }
 
-        #start-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            transition: opacity 1s;
-        }
+      .data-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 12px;
+      }
 
-        #loader {
-            width: 60px;
-            height: 60px;
-            border: 2px solid #333;
-            border-top: 2px solid #dca868;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
+      .data-card {
+        border: 1px solid #334;
+        border-radius: 10px;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.35);
+        font-size: 11px;
+      }
 
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      .data-card h3 {
+        margin: 0 0 6px;
+        font-size: 12px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #dca868;
+      }
 
-        .hidden {
-            opacity: 0;
-            pointer-events: none;
+      .data-card div {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 4px;
+        color: #9fb7d0;
+      }
+
+      .data-card div span:last-child {
+        color: #dca868;
+      }
+
+      #formula-panel {
+        border: 1px solid #334;
+        padding: 10px;
+        margin-top: 12px;
+        font-size: 10px;
+        color: #9fb7d0;
+        max-height: 180px;
+        overflow-y: auto;
+        background: rgba(0, 0, 0, 0.4);
+        white-space: pre-line;
+      }
+
+      .calc-console {
+        margin-top: 16px;
+        border: 1px solid #334;
+        padding: 10px;
+        border-radius: 12px;
+        background: rgba(2, 4, 8, 0.75);
+      }
+
+      .console-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .console-header h3 {
+        margin: 0;
+        font-size: 12px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #dca868;
+      }
+
+      .pill-button {
+        border: 1px solid #445;
+        background: rgba(0, 0, 0, 0.4);
+        color: #dca868;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 10px;
+        letter-spacing: 1px;
+        cursor: pointer;
+      }
+
+      .pill-button.active {
+        border-color: #dca868;
+        background: #dca868;
+        color: #000;
+      }
+
+      .info-button {
+        border: 1px solid #445;
+        background: transparent;
+        color: #dca868;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        font-size: 14px;
+        cursor: pointer;
+        position: relative;
+      }
+
+      .tooltip {
+        position: absolute;
+        top: 35px;
+        right: 0;
+        width: 260px;
+        background: rgba(20, 24, 30, 0.95);
+        color: #d1e9ff;
+        padding: 10px;
+        border: 1px solid #445;
+        border-radius: 8px;
+        font-size: 10px;
+        line-height: 1.4;
+        display: none;
+        z-index: 5;
+      }
+
+      .tooltip.visible {
+        display: block;
+      }
+
+      #formula-input {
+        width: 100%;
+        min-height: 80px;
+        border: 1px solid #445;
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.5);
+        color: #fefefe;
+        font-size: 11px;
+        font-family: 'JetBrains Mono', Consolas, monospace;
+        padding: 8px;
+        resize: vertical;
+      }
+
+      .console-actions {
+        margin-top: 8px;
+        display: flex;
+        gap: 8px;
+      }
+
+      #formula-output {
+        margin-top: 10px;
+        font-size: 10px;
+        color: #a5d9ff;
+        min-height: 40px;
+      }
+
+      #start-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        transition: opacity 1s;
+      }
+
+      #loader {
+        width: 60px;
+        height: 60px;
+        border: 2px solid #333;
+        border-top: 2px solid #dca868;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
         }
-        
-        #subtitle-box {
-            position: absolute;
-            bottom: 40px;
-            width: 100%;
-            text-align: center;
-            pointer-events: none;
+        100% {
+          transform: rotate(360deg);
         }
-        
-        #subtitle-text {
-            background: rgba(0,0,0,0.6);
-            color: #eee;
-            padding: 10px 20px;
-            border-radius: 4px;
-            font-size: 14px;
-            opacity: 0;
-            transition: opacity 0.5s;
-            display: inline-block;
-            max-width: 600px;
-        }
+      }
+
+      .hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      #subtitle-box {
+        position: absolute;
+        bottom: 40px;
+        width: 100%;
+        text-align: center;
+        pointer-events: none;
+      }
+
+      #subtitle-text {
+        background: rgba(0, 0, 0, 0.6);
+        color: #eee;
+        padding: 10px 20px;
+        border-radius: 4px;
+        font-size: 14px;
+        opacity: 0;
+        transition: opacity 0.5s;
+        display: inline-block;
+        max-width: 600px;
+      }
     </style>
-</head>
-<body>
-
+  </head>
+  <body>
     <!-- Initial User Interaction Overlay -->
     <div id="start-overlay">
-        <div id="loader"></div>
-        <h2 style="color: #dca868; font-weight: lighter; letter-spacing: 4px;">GARGANTUA</h2>
-        <p style="color: #666; font-size: 12px; margin-bottom: 30px;">WEBGL RELATIVISTIC RENDERING ENGINE</p>
-        <button id="init-btn" style="width: 200px;">INITIALIZE SIMULATION</button>
+      <div id="loader"></div>
+      <h2 style="color: #dca868; font-weight: lighter; letter-spacing: 4px">GARGANTUA</h2>
+      <p style="color: #666; font-size: 12px; margin-bottom: 30px">WEBGL RELATIVISTIC RENDERING ENGINE</p>
+      <button id="init-btn" style="width: 200px">INITIALIZE SIMULATION</button>
     </div>
 
     <!-- UI Panel -->
     <div id="ui-container" class="hidden">
-        <div class="tab-bar">
-            <button class="tab-btn active" data-tab="controls">System Controls</button>
-            <button class="tab-btn" data-tab="telemetry">Relativistic Data</button>
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="controls">System Controls</button>
+        <button class="tab-btn" data-tab="telemetry">Relativistic Data</button>
+      </div>
+
+      <div class="tab-panel active" id="controls-panel">
+        <h1>System Controls</h1>
+        <div class="control-group">
+          <label>Black Hole Mass (Solar Masses) <span data-display="mass">1.0</span></label>
+          <input type="range" id="mass-slider" min="0.1" max="3.0" step="0.1" value="1.0" />
         </div>
 
-        <div class="tab-panel active" id="controls-panel">
-            <h1>System Controls</h1>
-            <div class="control-group">
-                <label>Black Hole Mass (Solar Masses) <span data-display="mass">1.0</span></label>
-                <input type="range" id="mass-slider" min="0.1" max="3.0" step="0.1" value="1.0">
-            </div>
-            
-            <div class="control-group">
-                <label>Spin Parameter a <span data-display="spin">0.95</span></label>
-                <input type="range" id="spin-slider" min="0.0" max="0.998" step="0.001" value="0.95">
-            </div>
-
-            <div class="control-group">
-                <label>Accretion Disk Density <span data-display="density">1.0</span></label>
-                <input type="range" id="density-slider" min="0.0" max="2.0" step="0.1" value="1.0">
-            </div>
-
-            <div class="control-group">
-                <label>Observer Inclination (°) <span data-display="inclination">60</span></label>
-                <input type="range" id="inclination-slider" min="0" max="90" step="1" value="60">
-            </div>
-
-            <div class="control-group">
-                <label>Doppler Boost <span data-display="doppler">1.5</span></label>
-                <input type="range" id="doppler-slider" min="0.5" max="3.0" step="0.05" value="1.5">
-            </div>
-
-            <div class="control-group">
-                <label>Disk Temperature / Exposure <span data-display="exposure">1.1</span></label>
-                <input type="range" id="exposure-slider" min="0.6" max="1.6" step="0.02" value="1.1">
-            </div>
-
-            <div class="control-group">
-                <label>Camera Azimuth (°) <span data-display="azimuth">0</span></label>
-                <input type="range" id="azimuth-slider" min="0" max="360" step="0.1" value="0">
-            </div>
-
-            <div class="control-group">
-                <label>Camera Elevation (°) <span data-display="elevation">20</span></label>
-                <input type="range" id="elevation-slider" min="0" max="360" step="0.1" value="20">
-            </div>
-
-            <div class="control-group">
-                <label>Camera Zoom <span data-display="zoom">8.0</span></label>
-                <input type="range" id="zoom-slider" min="2.0" max="15.0" step="0.1" value="8.0">
-            </div>
-
-            <h1 style="margin-top: 20px;">Data Logs / Audio</h1>
-            <button id="narrate-intro">Analytic: Introduction</button>
-            <button id="narrate-lensing">Analytic: Gravitational Lensing</button>
-            <button id="narrate-horizon">Analytic: Event Horizon</button>
-            <button id="toggle-ambience" class="active">Toggle Ambience</button>
-
-            <div class="telemetry">
-                <div><span>SPACETIME CURVATURE</span><span id="val-curve">NORMAL</span></div>
-                <div><span>PHOTON SPHERE</span><span id="val-photon">STABLE</span></div>
-                <div><span>RELATIVISTIC JETS</span><span>DETECTED</span></div>
-            </div>
+        <div class="control-group">
+          <label>Spin Parameter a <span data-display="spin">0.95</span></label>
+          <input type="range" id="spin-slider" min="0.0" max="0.998" step="0.001" value="0.95" />
         </div>
 
-        <div class="tab-panel" id="telemetry-panel">
-            <h1>Relativistic Parameters</h1>
-            <div class="telemetry detailed">
-                <div><span>Gravitational Radius R<sub>g</sub></span><span id="metric-rg">--</span></div>
-                <div><span>ISCO Radius</span><span id="metric-isco">--</span></div>
-                <div><span>Photon Sphere</span><span id="metric-photon">--</span></div>
-                <div><span>Redshift z</span><span id="metric-redshift">--</span></div>
-                <div><span>β (ISCO)</span><span id="metric-beta">--</span></div>
-            </div>
-            <pre id="formula-panel"></pre>
+        <div class="control-group">
+          <label>Accretion Disk Density <span data-display="density">1.0</span></label>
+          <input type="range" id="density-slider" min="0.0" max="2.0" step="0.1" value="1.0" />
         </div>
+
+        <div class="control-group">
+          <label>Observer Inclination (°) <span data-display="inclination">60</span></label>
+          <input type="range" id="inclination-slider" min="0" max="90" step="1" value="60" />
+        </div>
+
+        <div class="control-group">
+          <label>Doppler Boost <span data-display="doppler">1.5</span></label>
+          <input type="range" id="doppler-slider" min="0.5" max="3.0" step="0.05" value="1.5" />
+        </div>
+
+        <div class="control-group">
+          <label>Disk Temperature / Exposure <span data-display="exposure">1.1</span></label>
+          <input type="range" id="exposure-slider" min="0.6" max="1.6" step="0.02" value="1.1" />
+        </div>
+
+        <div class="control-group">
+          <label>Camera Azimuth (°) <span data-display="azimuth">0</span></label>
+          <input type="range" id="azimuth-slider" min="0" max="360" step="0.1" value="0" />
+        </div>
+
+        <div class="control-group">
+          <label>Camera Elevation (°) <span data-display="elevation">20</span></label>
+          <input type="range" id="elevation-slider" min="0" max="360" step="0.1" value="20" />
+        </div>
+
+        <div class="control-group">
+          <label>Camera Zoom <span data-display="zoom">8.0</span></label>
+          <input type="range" id="zoom-slider" min="2.0" max="15.0" step="0.1" value="8.0" />
+        </div>
+
+        <h1 style="margin-top: 20px">Data Logs / Audio</h1>
+        <button id="narrate-intro">Analytic: Introduction</button>
+        <button id="narrate-lensing">Analytic: Gravitational Lensing</button>
+        <button id="narrate-horizon">Analytic: Event Horizon</button>
+        <button id="toggle-ambience" class="active">Toggle Ambience</button>
+
+        <div class="telemetry">
+          <div><span>SPACETIME CURVATURE</span><span id="val-curve">NORMAL</span></div>
+          <div><span>PHOTON SPHERE</span><span id="val-photon">STABLE</span></div>
+          <div><span>RELATIVISTIC JETS</span><span>DETECTED</span></div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="telemetry-panel">
+        <h1>Relativistic Parameters</h1>
+        <div class="data-grid">
+          <article class="data-card">
+            <h3>Gravitational</h3>
+            <div>
+              <span>R<sub>g</sub></span
+              ><span id="metric-rg">--</span>
+            </div>
+            <div><span>ISCO</span><span id="metric-isco">--</span></div>
+            <div><span>Photon Sphere</span><span id="metric-photon">--</span></div>
+          </article>
+          <article class="data-card">
+            <h3>Relativity</h3>
+            <div><span>Redshift z</span><span id="metric-redshift">--</span></div>
+            <div><span>β (ISCO)</span><span id="metric-beta">--</span></div>
+            <div><span>Time Dilation</span><span id="metric-time">--</span></div>
+          </article>
+          <article class="data-card">
+            <h3>Doppler</h3>
+            <div><span>Boost Factor</span><span id="metric-doppler">--</span></div>
+            <div><span>Orbital Period</span><span id="metric-period">--</span></div>
+            <div><span>Energy Flux</span><span id="metric-flux">--</span></div>
+          </article>
+        </div>
+        <pre id="formula-panel"></pre>
+        <section class="calc-console">
+          <div class="console-header">
+            <h3>自定義計算</h3>
+            <div>
+              <button id="console-toggle" class="pill-button active">LIVE</button>
+              <button id="console-info" class="info-button">❗</button>
+              <div id="console-tooltip" class="tooltip">
+                可使用的符號：<br />
+                r (Rg)，a (spin)，beta (ISCO β)，incl (傾角，弧度)，Rg，ISCO，photon，z。<br />
+                每行格式：變數 = 表達式，如<br />
+                doppler = sqrt((1+beta)/(1-beta))<br />
+                inclination = 45<br />
+                受支援操作：+ - * / () pow sqrt sin cos 等。
+              </div>
+            </div>
+          </div>
+          <textarea id="formula-input" spellcheck="false">
+doppler = sqrt((1+beta)/(1-beta))
+inclination = 45
+zoom = 10</textarea
+          >
+          <div class="console-actions">
+            <button id="apply-formula" class="pill-button active">套用結果</button>
+            <button id="clear-formula" class="pill-button">重設文字</button>
+          </div>
+          <div id="formula-output"></div>
+        </section>
+      </div>
     </div>
 
     <div id="subtitle-box"><div id="subtitle-text"></div></div>
@@ -334,13 +516,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        /* * SHADER CODE
-         * This is where the physics happens. We use Raymarching with a twist.
-         * Instead of straight lines, rays bend towards the origin (0,0,0) based on 
-         * distance, simulating gravity.
-         */
+      /* * SHADER CODE
+       * This is where the physics happens. We use Raymarching with a twist.
+       * Instead of straight lines, rays bend towards the origin (0,0,0) based on
+       * distance, simulating gravity.
+       */
 
-        const vertexShader = `
+      const vertexShader = `
             varying vec2 vUv;
             void main() {
                 vUv = uv;
@@ -348,7 +530,7 @@
             }
         `;
 
-        const fragmentShader = `
+      const fragmentShader = `
             uniform float iTime;
             uniform vec2 iResolution;
             uniform vec3 iCameraPos;
@@ -492,283 +674,446 @@
             }
         `;
 
-        // --- JAVASCRIPT LOGIC ---
+      // --- JAVASCRIPT LOGIC ---
 
-        let scene, camera, renderer, material, mesh;
-        let startTime = Date.now();
-        let mouseX = 0, mouseY = 0;
-        
-        // Physics State
-        const params = {
-            mass: 1.0,
-            density: 1.0,
-            zoom: 8.0,
-            spin: 0.95,
-            inclination: 60,
-            doppler: 1.5,
-            exposure: 1.1,
-            azimuthBase: 0,
-            elevationBase: 20,
-            angleX: 0,
-            angleY: 0.2
+      let scene, camera, renderer, material, mesh;
+      let startTime = Date.now();
+      let mouseX = 0,
+        mouseY = 0;
+
+      // Physics State
+      const params = {
+        mass: 1.0,
+        density: 1.0,
+        zoom: 8.0,
+        spin: 0.95,
+        inclination: 60,
+        doppler: 1.5,
+        exposure: 1.1,
+        azimuthBase: 0,
+        elevationBase: 20,
+        angleX: 0,
+        angleY: 0.2,
+      };
+      const sliders = {};
+      const displayRefs = {
+        mass: document.querySelector('[data-display="mass"]'),
+        spin: document.querySelector('[data-display="spin"]'),
+        density: document.querySelector('[data-display="density"]'),
+        inclination: document.querySelector('[data-display="inclination"]'),
+        doppler: document.querySelector('[data-display="doppler"]'),
+        exposure: document.querySelector('[data-display="exposure"]'),
+        azimuth: document.querySelector('[data-display="azimuth"]'),
+        elevation: document.querySelector('[data-display="elevation"]'),
+        zoom: document.querySelector('[data-display="zoom"]'),
+      };
+      const telemetryRefs = {
+        rg: document.getElementById('metric-rg'),
+        isco: document.getElementById('metric-isco'),
+        photon: document.getElementById('metric-photon'),
+        redshift: document.getElementById('metric-redshift'),
+        beta: document.getElementById('metric-beta'),
+      };
+      const formulaPanel = document.getElementById('formula-panel');
+      const formulaInput = document.getElementById('formula-input');
+      const formulaOutput = document.getElementById('formula-output');
+      const consoleToggle = document.getElementById('console-toggle');
+      const consoleInfo = document.getElementById('console-info');
+      const consoleTooltip = document.getElementById('console-tooltip');
+      const applyFormulaBtn = document.getElementById('apply-formula');
+      const clearFormulaBtn = document.getElementById('clear-formula');
+      let consoleLive = true;
+
+      // Audio State
+      let audioCtx;
+      let droneOscillators = [];
+      let droneGain;
+      let isAmbienceOn = true;
+
+      const updateDisplay = (key, value, digits = 2) => {
+        if (displayRefs[key]) {
+          displayRefs[key].innerText = Number(value).toFixed(digits);
+        }
+      };
+
+      const SOLAR_MASS = 1.98847e30;
+      const G = 6.6743e-11;
+      const C = 299792458;
+
+      function gravitationalRadiusMeters(massSolar) {
+        return (2 * G * massSolar * SOLAR_MASS) / (C * C);
+      }
+
+      function iscoRadiusRg(spin) {
+        const a = Math.min(Math.max(spin, -0.998), 0.998);
+        const term = Math.cbrt(1 - a * a);
+        const z1 = 1 + term * (Math.cbrt(1 + a) + Math.cbrt(1 - a));
+        const z2 = Math.sqrt(3 * a * a + z1 * z1);
+        const sign = a >= 0 ? 1 : -1;
+        return 3 + z2 - sign * Math.sqrt((3 - z1) * (3 + z1 + 2 * z2));
+      }
+
+      function photonRadiusRg(spin) {
+        const a = Math.abs(Math.min(Math.max(spin, -0.999), 0.999));
+        const angle = (2 / 3) * Math.acos(-a);
+        return 2 * (1 + Math.cos(angle));
+      }
+
+      function gravitationalRedshiftRg(rRg, spin) {
+        const r = Math.max(rRg, 1.0001);
+        const a = Math.min(Math.max(spin, -0.998), 0.998);
+        const gm = 1 - 2 / r + (a * a) / (r * r);
+        return 1 / Math.sqrt(Math.max(gm, 1e-6)) - 1;
+      }
+
+      function orbitalBeta(rRg, spin) {
+        const r = Math.max(rRg, 1.0001);
+        const omega = 1 / (Math.pow(r, 1.5) + spin);
+        return Math.min(Math.abs((r * omega) / C), 0.99);
+      }
+
+      function wrap360(value) {
+        return ((value % 360) + 360) % 360;
+      }
+
+      function init() {
+        // ThreeJS Setup
+        scene = new THREE.Scene();
+
+        // We don't use a standard camera for rendering 3D objects,
+        // but we use it to calculate the "eye" position for the shader.
+        camera = new THREE.Camera();
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Screen Quad
+        const geometry = new THREE.PlaneBufferGeometry(2, 2);
+        material = new THREE.ShaderMaterial({
+          vertexShader: vertexShader,
+          fragmentShader: fragmentShader,
+          uniforms: {
+            iTime: { value: 0 },
+            iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+            iCameraPos: { value: new THREE.Vector3(0, 0, 10) },
+            iCameraDir: { value: new THREE.Vector3(0, 0, 0) },
+            iCameraUp: { value: new THREE.Vector3(0, 1, 0) },
+            iMass: { value: 1.0 },
+            iDiskDensity: { value: 1.0 },
+            iSpin: { value: params.spin },
+            iInclination: { value: THREE.MathUtils.degToRad(params.inclination) },
+            iExposure: { value: params.exposure },
+            iDoppler: { value: params.doppler },
+          },
+        });
+
+        mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+
+        // Event Listeners
+        window.addEventListener('resize', onResize);
+        document.addEventListener('mousemove', onMouseMove);
+
+        setupUI();
+        setupTabs();
+        setupConsole();
+
+        // Initial overlay
+        document.getElementById('init-btn').addEventListener('click', startSimulation);
+      }
+
+      function startSimulation() {
+        document.getElementById('start-overlay').classList.add('hidden');
+        document.getElementById('ui-container').classList.remove('hidden');
+
+        initAudio();
+        animate();
+
+        // Initial Narration
+        speak('Simulation Initialized. Viewing Target: Gargantua. A supermassive rotating black hole.');
+      }
+
+      function onResize() {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        material.uniforms.iResolution.value.set(window.innerWidth, window.innerHeight);
+      }
+
+      function onMouseMove(e) {
+        // Map mouse to rotation angles
+        mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+        mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+      }
+
+      function setupUI() {
+        sliders.mass = document.getElementById('mass-slider');
+        sliders.density = document.getElementById('density-slider');
+        sliders.zoom = document.getElementById('zoom-slider');
+        sliders.spin = document.getElementById('spin-slider');
+        sliders.inclination = document.getElementById('inclination-slider');
+        sliders.doppler = document.getElementById('doppler-slider');
+        sliders.exposure = document.getElementById('exposure-slider');
+        sliders.azimuth = document.getElementById('azimuth-slider');
+        sliders.elevation = document.getElementById('elevation-slider');
+
+        sliders.mass.addEventListener('input', e => {
+          params.mass = parseFloat(e.target.value);
+          updateDisplay('mass', params.mass);
+          document.getElementById('val-curve').innerText = params.mass > 2.0 ? 'CRITICAL' : 'NORMAL';
+          updateTelemetry();
+        });
+
+        sliders.density.addEventListener('input', e => {
+          params.density = parseFloat(e.target.value);
+          updateDisplay('density', params.density);
+        });
+
+        sliders.zoom.addEventListener('input', e => {
+          params.zoom = parseFloat(e.target.value);
+          updateDisplay('zoom', params.zoom, 1);
+        });
+
+        sliders.spin.addEventListener('input', e => {
+          params.spin = parseFloat(e.target.value);
+          updateDisplay('spin', params.spin, 3);
+          updateTelemetry();
+        });
+
+        sliders.inclination.addEventListener('input', e => {
+          params.inclination = parseFloat(e.target.value);
+          updateDisplay('inclination', params.inclination, 1);
+          updateTelemetry();
+        });
+
+        sliders.doppler.addEventListener('input', e => {
+          params.doppler = parseFloat(e.target.value);
+          updateDisplay('doppler', params.doppler, 2);
+        });
+
+        sliders.exposure.addEventListener('input', e => {
+          params.exposure = parseFloat(e.target.value);
+          updateDisplay('exposure', params.exposure, 2);
+        });
+
+        sliders.azimuth.addEventListener('input', e => {
+          params.azimuthBase = parseFloat(e.target.value);
+          updateDisplay('azimuth', params.azimuthBase, 1);
+        });
+
+        sliders.elevation.addEventListener('input', e => {
+          params.elevationBase = parseFloat(e.target.value);
+          updateDisplay('elevation', params.elevationBase, 1);
+        });
+
+        // Audio Controls
+        document.getElementById('narrate-intro').onclick = () =>
+          speak(
+            'Black holes are regions of spacetime where gravity is so strong that nothing, not even light, can escape. The boundary is called the Event Horizon.',
+          );
+
+        document.getElementById('narrate-lensing').onclick = () =>
+          speak(
+            'Notice the halo of light. This is gravitational lensing. The gravity of the black hole bends light from the accretion disk behind it, making it appear above and below the shadow.',
+          );
+
+        document.getElementById('narrate-horizon').onclick = () =>
+          speak(
+            'The accretion disk spins at relativistic speeds. Due to the Doppler effect, the side moving towards you appears brighter and bluer, while the receding side is dimmer and redder.',
+          );
+
+        document.getElementById('toggle-ambience').onclick = e => {
+          isAmbienceOn = !isAmbienceOn;
+          if (droneGain) {
+            droneGain.gain.setTargetAtTime(isAmbienceOn ? 0.3 : 0, audioCtx.currentTime, 1.0);
+          }
+          e.target.classList.toggle('active');
         };
-        const displayRefs = {
-            mass: document.querySelector('[data-display="mass"]'),
-            spin: document.querySelector('[data-display="spin"]'),
-            density: document.querySelector('[data-display="density"]'),
-            inclination: document.querySelector('[data-display="inclination"]'),
-            doppler: document.querySelector('[data-display="doppler"]'),
-            exposure: document.querySelector('[data-display="exposure"]'),
-            azimuth: document.querySelector('[data-display="azimuth"]'),
-            elevation: document.querySelector('[data-display="elevation"]'),
-            zoom: document.querySelector('[data-display="zoom"]')
+
+        updateDisplay('mass', params.mass);
+        updateDisplay('spin', params.spin, 3);
+        updateDisplay('density', params.density);
+        updateDisplay('inclination', params.inclination, 1);
+        updateDisplay('doppler', params.doppler, 2);
+        updateDisplay('exposure', params.exposure, 2);
+        updateDisplay('azimuth', params.azimuthBase, 1);
+        updateDisplay('elevation', params.elevationBase, 1);
+        updateDisplay('zoom', params.zoom, 1);
+        updateTelemetry();
+      }
+
+      function setupConsole() {
+        if (!consoleToggle) return;
+        consoleToggle.addEventListener('click', () => {
+          consoleLive = !consoleLive;
+          consoleToggle.classList.toggle('active', consoleLive);
+          consoleToggle.textContent = consoleLive ? 'LIVE' : 'PAUSE';
+        });
+        consoleInfo.addEventListener('click', () => {
+          consoleTooltip.classList.toggle('visible');
+        });
+        document.addEventListener('click', event => {
+          if (!consoleInfo.contains(event.target) && !consoleTooltip.contains(event.target)) {
+            consoleTooltip.classList.remove('visible');
+          }
+        });
+        applyFormulaBtn.addEventListener('click', () => {
+          evaluateFormulas(true);
+        });
+        clearFormulaBtn.addEventListener('click', () => {
+          formulaInput.value = 'doppler = sqrt((1+beta)/(1-beta))\ninclination = 45\nzoom = 10';
+          evaluateFormulas(false);
+        });
+      }
+
+      function evaluateFormulas(applyUpdates = false) {
+        if (!formulaInput) return;
+        const text = formulaInput.value.trim();
+        if (!text) {
+          formulaOutput.innerText = '輸入公式，如 doppler = sqrt((1+beta)/(1-beta))';
+          return;
+        }
+        const massSolar = params.mass * 1e8;
+        const rg = gravitationalRadiusMeters(massSolar);
+        const isco = iscoRadiusRg(params.spin);
+        const photon = photonRadiusRg(params.spin);
+        const redshift = gravitationalRedshiftRg(photon + 0.05, params.spin);
+        const beta = orbitalBeta(isco, params.spin);
+        const incl = THREE.MathUtils.degToRad(params.inclination);
+        const context = { r: photon, a: params.spin, beta, incl, Rg: rg, ISCO: isco, photon, z: redshift };
+        const assignments = {};
+        const outputs = [];
+        const lines = text.split(/\n+/);
+        for (const lineRaw of lines) {
+          const line = lineRaw.trim();
+          if (!line) continue;
+          const parts = line.split('=');
+          if (parts.length !== 2) {
+            outputs.push(`無法解析：${line}`);
+            continue;
+          }
+          const label = parts[0].trim();
+          const expr = parts[1].trim();
+          try {
+            const fn = new Function('r', 'a', 'beta', 'incl', 'Rg', 'ISCO', 'photon', 'z', `return ${expr};`);
+            const value = fn(
+              context.r,
+              context.a,
+              context.beta,
+              context.incl,
+              context.Rg,
+              context.ISCO,
+              context.photon,
+              context.z,
+            );
+            outputs.push(`${label} = ${Number(value).toFixed(6)}`);
+            assignments[label.toLowerCase()] = Number(value);
+          } catch (error) {
+            outputs.push(`${label}: 錯誤 (${error.message})`);
+          }
+        }
+        formulaOutput.innerText = outputs.join('\n');
+        if (applyUpdates) {
+          applyFormulaAssignments(assignments);
+        }
+      }
+
+      function applyFormulaAssignments(assignments) {
+        const setIfDefined = (key, setter) => {
+          if (assignments[key] !== undefined && !Number.isNaN(assignments[key])) {
+            setter(assignments[key]);
+          }
         };
-        const telemetryRefs = {
-            rg: document.getElementById('metric-rg'),
-            isco: document.getElementById('metric-isco'),
-            photon: document.getElementById('metric-photon'),
-            redshift: document.getElementById('metric-redshift'),
-            beta: document.getElementById('metric-beta')
-        };
-        const formulaPanel = document.getElementById('formula-panel');
+        setIfDefined('mass', val => {
+          params.mass = clamp(val, 0.1, 3.0);
+          sliders.mass.value = params.mass;
+          updateDisplay('mass', params.mass);
+        });
+        setIfDefined('spin', val => {
+          params.spin = clamp(val, 0.0, 0.998);
+          sliders.spin.value = params.spin;
+          updateDisplay('spin', params.spin, 3);
+        });
+        setIfDefined('inclination', val => {
+          params.inclination = clamp(val, 0, 90);
+          sliders.inclination.value = params.inclination;
+          updateDisplay('inclination', params.inclination, 1);
+        });
+        setIfDefined('doppler', val => {
+          params.doppler = clamp(val, 0.5, 3.0);
+          sliders.doppler.value = params.doppler;
+          updateDisplay('doppler', params.doppler, 2);
+        });
+        setIfDefined('exposure', val => {
+          params.exposure = clamp(val, 0.6, 1.6);
+          sliders.exposure.value = params.exposure;
+          updateDisplay('exposure', params.exposure, 2);
+        });
+        setIfDefined('zoom', val => {
+          params.zoom = clamp(val, 2.0, 15.0);
+          sliders.zoom.value = params.zoom;
+          updateDisplay('zoom', params.zoom, 1);
+        });
+        setIfDefined('density', val => {
+          params.density = clamp(val, 0.0, 2.0);
+          sliders.density.value = params.density;
+          updateDisplay('density', params.density, 2);
+        });
+        setIfDefined('azimuth', val => {
+          params.azimuthBase = wrap360(val);
+          sliders.azimuth.value = params.azimuthBase;
+          updateDisplay('azimuth', params.azimuthBase, 1);
+        });
+        setIfDefined('elevation', val => {
+          params.elevationBase = wrap360(val);
+          sliders.elevation.value = params.elevationBase;
+          updateDisplay('elevation', params.elevationBase, 1);
+        });
+        updateTelemetry();
+      }
 
-        // Audio State
-        let audioCtx;
-        let droneOscillators = [];
-        let droneGain;
-        let isAmbienceOn = true;
+      function setupTabs() {
+        const buttons = document.querySelectorAll('.tab-btn');
+        const panels = document.querySelectorAll('.tab-panel');
+        buttons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            buttons.forEach(b => b.classList.remove('active'));
+            panels.forEach(panel => panel.classList.remove('active'));
+            btn.classList.add('active');
+            const target = btn.dataset.tab;
+            document.getElementById(`${target}-panel`).classList.add('active');
+          });
+        });
+      }
 
-        const updateDisplay = (key, value, digits = 2) => {
-            if (displayRefs[key]) {
-                displayRefs[key].innerText = Number(value).toFixed(digits);
-            }
-        };
+      function updateTelemetry() {
+        const massSolar = params.mass * 1e8;
+        const massKg = massSolar * SOLAR_MASS;
+        const rg = gravitationalRadiusMeters(massSolar);
+        const isco = iscoRadiusRg(params.spin);
+        const photon = photonRadiusRg(params.spin);
+        const redshift = gravitationalRedshiftRg(photon + 0.05, params.spin);
+        const beta = orbitalBeta(isco, params.spin);
 
-        const SOLAR_MASS = 1.98847e30;
-        const G = 6.67430e-11;
-        const C = 299792458;
+        if (telemetryRefs.rg) telemetryRefs.rg.innerText = `${rg.toExponential(3)} m`;
+        if (telemetryRefs.isco) telemetryRefs.isco.innerText = `${isco.toFixed(3)} Rg`;
+        if (telemetryRefs.photon) telemetryRefs.photon.innerText = `${photon.toFixed(3)} Rg`;
+        if (telemetryRefs.redshift) telemetryRefs.redshift.innerText = redshift.toFixed(4);
+        if (telemetryRefs.beta) telemetryRefs.beta.innerText = beta.toFixed(4);
+        const timeDilation = 1 + redshift;
+        const dopplerFactor = Math.sqrt((1 + beta) / (1 - beta));
+        const periodSeconds = 2 * Math.PI * (Math.pow(isco, 1.5) + params.spin) * (rg / C);
+        const flux = params.density * Math.pow(params.exposure, 4) * 1e-3;
+        const timeRef = document.getElementById('metric-time');
+        if (timeRef) timeRef.innerText = `${timeDilation.toFixed(3)}×`;
+        const dopplerRef = document.getElementById('metric-doppler');
+        if (dopplerRef) dopplerRef.innerText = dopplerFactor.toFixed(3);
+        const periodRef = document.getElementById('metric-period');
+        if (periodRef) periodRef.innerText = `${(periodSeconds / 60).toFixed(2)} min`;
+        const fluxRef = document.getElementById('metric-flux');
+        if (fluxRef) fluxRef.innerText = `${flux.toExponential(2)} arb`;
 
-        function gravitationalRadiusMeters(massSolar) {
-            return (2 * G * massSolar * SOLAR_MASS) / (C * C);
-        }
-
-        function iscoRadiusRg(spin) {
-            const a = Math.min(Math.max(spin, -0.998), 0.998);
-            const term = Math.cbrt(1 - a * a);
-            const z1 = 1 + term * (Math.cbrt(1 + a) + Math.cbrt(1 - a));
-            const z2 = Math.sqrt(3 * a * a + z1 * z1);
-            const sign = a >= 0 ? 1 : -1;
-            return 3 + z2 - sign * Math.sqrt((3 - z1) * (3 + z1 + 2 * z2));
-        }
-
-        function photonRadiusRg(spin) {
-            const a = Math.abs(Math.min(Math.max(spin, -0.999), 0.999));
-            const angle = (2 / 3) * Math.acos(-a);
-            return 2 * (1 + Math.cos(angle));
-        }
-
-        function gravitationalRedshiftRg(rRg, spin) {
-            const r = Math.max(rRg, 1.0001);
-            const a = Math.min(Math.max(spin, -0.998), 0.998);
-            const gm = 1 - 2 / r + (a * a) / (r * r);
-            return 1 / Math.sqrt(Math.max(gm, 1e-6)) - 1;
-        }
-
-        function orbitalBeta(rRg, spin) {
-            const r = Math.max(rRg, 1.0001);
-            const omega = 1 / (Math.pow(r, 1.5) + spin);
-            return Math.min(Math.abs((r * omega) / C), 0.99);
-        }
-
-        function init() {
-            // ThreeJS Setup
-            scene = new THREE.Scene();
-            
-            // We don't use a standard camera for rendering 3D objects, 
-            // but we use it to calculate the "eye" position for the shader.
-            camera = new THREE.Camera();
-            
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.body.appendChild(renderer.domElement);
-
-            // Screen Quad
-            const geometry = new THREE.PlaneBufferGeometry(2, 2);
-            material = new THREE.ShaderMaterial({
-                vertexShader: vertexShader,
-                fragmentShader: fragmentShader,
-                uniforms: {
-                    iTime: { value: 0 },
-                    iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-                    iCameraPos: { value: new THREE.Vector3(0, 0, 10) },
-                    iCameraDir: { value: new THREE.Vector3(0, 0, 0) },
-                    iCameraUp: { value: new THREE.Vector3(0, 1, 0) },
-                    iMass: { value: 1.0 },
-                    iDiskDensity: { value: 1.0 },
-                    iSpin: { value: params.spin },
-                    iInclination: { value: THREE.MathUtils.degToRad(params.inclination) },
-                    iExposure: { value: params.exposure },
-                    iDoppler: { value: params.doppler }
-                }
-            });
-
-            mesh = new THREE.Mesh(geometry, material);
-            scene.add(mesh);
-
-            // Event Listeners
-            window.addEventListener('resize', onResize);
-            document.addEventListener('mousemove', onMouseMove);
-            
-            setupUI();
-            setupTabs();
-            
-            // Initial overlay
-            document.getElementById('init-btn').addEventListener('click', startSimulation);
-        }
-
-        function startSimulation() {
-            document.getElementById('start-overlay').classList.add('hidden');
-            document.getElementById('ui-container').classList.remove('hidden');
-            
-            initAudio();
-            animate();
-            
-            // Initial Narration
-            speak("Simulation Initialized. Viewing Target: Gargantua. A supermassive rotating black hole.");
-        }
-
-        function onResize() {
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            material.uniforms.iResolution.value.set(window.innerWidth, window.innerHeight);
-        }
-
-        function onMouseMove(e) {
-            // Map mouse to rotation angles
-            mouseX = (e.clientX / window.innerWidth) * 2 - 1;
-            mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
-        }
-
-        function setupUI() {
-            const massSlider = document.getElementById('mass-slider');
-            const densitySlider = document.getElementById('density-slider');
-            const zoomSlider = document.getElementById('zoom-slider');
-            const spinSlider = document.getElementById('spin-slider');
-            const inclinationSlider = document.getElementById('inclination-slider');
-            const dopplerSlider = document.getElementById('doppler-slider');
-            const exposureSlider = document.getElementById('exposure-slider');
-            const azimuthSlider = document.getElementById('azimuth-slider');
-            const elevationSlider = document.getElementById('elevation-slider');
-
-            massSlider.addEventListener('input', (e) => {
-                params.mass = parseFloat(e.target.value);
-                updateDisplay('mass', params.mass);
-                document.getElementById('val-curve').innerText = (params.mass > 2.0) ? "CRITICAL" : "NORMAL";
-                updateTelemetry();
-            });
-            
-            densitySlider.addEventListener('input', (e) => {
-                params.density = parseFloat(e.target.value);
-                updateDisplay('density', params.density);
-            });
-
-            zoomSlider.addEventListener('input', (e) => {
-                params.zoom = parseFloat(e.target.value);
-                updateDisplay('zoom', params.zoom, 1);
-            });
-
-            spinSlider.addEventListener('input', (e) => {
-                params.spin = parseFloat(e.target.value);
-                updateDisplay('spin', params.spin, 3);
-                updateTelemetry();
-            });
-
-            inclinationSlider.addEventListener('input', (e) => {
-                params.inclination = parseFloat(e.target.value);
-                updateDisplay('inclination', params.inclination, 1);
-                updateTelemetry();
-            });
-
-            dopplerSlider.addEventListener('input', (e) => {
-                params.doppler = parseFloat(e.target.value);
-                updateDisplay('doppler', params.doppler, 2);
-            });
-
-            exposureSlider.addEventListener('input', (e) => {
-                params.exposure = parseFloat(e.target.value);
-                updateDisplay('exposure', params.exposure, 2);
-            });
-
-            azimuthSlider.addEventListener('input', (e) => {
-                params.azimuthBase = parseFloat(e.target.value);
-                updateDisplay('azimuth', params.azimuthBase, 1);
-            });
-
-            elevationSlider.addEventListener('input', (e) => {
-                params.elevationBase = parseFloat(e.target.value);
-                updateDisplay('elevation', params.elevationBase, 1);
-            });
-
-            // Audio Controls
-            document.getElementById('narrate-intro').onclick = () => 
-                speak("Black holes are regions of spacetime where gravity is so strong that nothing, not even light, can escape. The boundary is called the Event Horizon.");
-            
-            document.getElementById('narrate-lensing').onclick = () => 
-                speak("Notice the halo of light. This is gravitational lensing. The gravity of the black hole bends light from the accretion disk behind it, making it appear above and below the shadow.");
-            
-            document.getElementById('narrate-horizon').onclick = () => 
-                speak("The accretion disk spins at relativistic speeds. Due to the Doppler effect, the side moving towards you appears brighter and bluer, while the receding side is dimmer and redder.");
-
-            document.getElementById('toggle-ambience').onclick = (e) => {
-                isAmbienceOn = !isAmbienceOn;
-                if(droneGain) {
-                    droneGain.gain.setTargetAtTime(isAmbienceOn ? 0.3 : 0, audioCtx.currentTime, 1.0);
-                }
-                e.target.classList.toggle('active');
-            };
-
-            updateDisplay('mass', params.mass);
-            updateDisplay('spin', params.spin, 3);
-            updateDisplay('density', params.density);
-            updateDisplay('inclination', params.inclination, 1);
-            updateDisplay('doppler', params.doppler, 2);
-            updateDisplay('exposure', params.exposure, 2);
-            updateDisplay('azimuth', params.azimuthBase, 1);
-            updateDisplay('elevation', params.elevationBase, 1);
-            updateDisplay('zoom', params.zoom, 1);
-            updateTelemetry();
-        }
-
-        function setupTabs() {
-            const buttons = document.querySelectorAll('.tab-btn');
-            const panels = document.querySelectorAll('.tab-panel');
-            buttons.forEach((btn) => {
-                btn.addEventListener('click', () => {
-                    buttons.forEach((b) => b.classList.remove('active'));
-                    panels.forEach((panel) => panel.classList.remove('active'));
-                    btn.classList.add('active');
-                    const target = btn.dataset.tab;
-                    document.getElementById(`${target}-panel`).classList.add('active');
-                });
-            });
-        }
-
-        function updateTelemetry() {
-            const massSolar = params.mass * 1e8;
-            const massKg = massSolar * SOLAR_MASS;
-            const rg = gravitationalRadiusMeters(massSolar);
-            const isco = iscoRadiusRg(params.spin);
-            const photon = photonRadiusRg(params.spin);
-            const redshift = gravitationalRedshiftRg(photon + 0.05, params.spin);
-            const beta = orbitalBeta(isco, params.spin);
-
-            if(telemetryRefs.rg) telemetryRefs.rg.innerText = `${rg.toExponential(3)} m`;
-            if(telemetryRefs.isco) telemetryRefs.isco.innerText = `${isco.toFixed(3)} Rg`;
-            if(telemetryRefs.photon) telemetryRefs.photon.innerText = `${photon.toFixed(3)} Rg`;
-            if(telemetryRefs.redshift) telemetryRefs.redshift.innerText = redshift.toFixed(4);
-            if(telemetryRefs.beta) telemetryRefs.beta.innerText = beta.toFixed(4);
-
-            if(formulaPanel) {
-                formulaPanel.innerText = `
+        if (formulaPanel) {
+          formulaPanel.innerText = `
 R_g = 2GM/c²
     = 2 × ${G} × ${massKg.toExponential(3)} / ${C}²
     = ${rg.toExponential(4)} m
@@ -781,139 +1126,142 @@ z = 1/√(1 - 2/r + a²/r²) - 1
 
 β = r·ω/c,  ω = 1/(r^{3/2} + a) → β = ${beta.toFixed(4)}
                 `;
-            }
         }
 
-        // --- AUDIO SYSTEM ---
-        
-        function initAudio() {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioCtx = new AudioContext();
-            
-            // Create a deep space drone using FM synthesis
-            const osc1 = audioCtx.createOscillator();
-            const osc2 = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            const filter = audioCtx.createBiquadFilter();
+        if (consoleLive) {
+          evaluateFormulas(false);
+        }
+      }
 
-            // Carrier
-            osc1.type = 'sine';
-            osc1.frequency.value = 50; // Low Rumble
+      // --- AUDIO SYSTEM ---
 
-            // Modulator
-            osc2.type = 'sawtooth';
-            osc2.frequency.value = 0.2; // Slow modulation
-            const modGain = audioCtx.createGain();
-            modGain.gain.value = 20;
+      function initAudio() {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
 
-            osc2.connect(modGain);
-            modGain.connect(osc1.frequency);
+        // Create a deep space drone using FM synthesis
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const filter = audioCtx.createBiquadFilter();
 
-            filter.type = 'lowpass';
-            filter.frequency.value = 200;
+        // Carrier
+        osc1.type = 'sine';
+        osc1.frequency.value = 50; // Low Rumble
 
-            osc1.connect(filter);
-            filter.connect(gain);
-            gain.connect(audioCtx.destination);
+        // Modulator
+        osc2.type = 'sawtooth';
+        osc2.frequency.value = 0.2; // Slow modulation
+        const modGain = audioCtx.createGain();
+        modGain.gain.value = 20;
 
-            osc1.start();
-            osc2.start();
-            
-            droneGain = gain;
-            droneGain.gain.value = 0.3;
+        osc2.connect(modGain);
+        modGain.connect(osc1.frequency);
+
+        filter.type = 'lowpass';
+        filter.frequency.value = 200;
+
+        osc1.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc1.start();
+        osc2.start();
+
+        droneGain = gain;
+        droneGain.gain.value = 0.3;
+      }
+
+      let synth = window.speechSynthesis;
+      let availableVoices = synth ? synth.getVoices() : [];
+      if (synth) {
+        synth.onvoiceschanged = () => {
+          availableVoices = synth.getVoices();
+        };
+      }
+
+      function showSubtitle(text) {
+        const subBox = document.getElementById('subtitle-text');
+        subBox.innerText = text;
+        subBox.style.opacity = 1;
+        setTimeout(() => {
+          subBox.style.opacity = 0;
+        }, 6000);
+      }
+
+      function speak(text) {
+        showSubtitle(text);
+
+        if (!synth) {
+          return;
         }
 
-        let synth = window.speechSynthesis;
-        let availableVoices = synth ? synth.getVoices() : [];
-        if (synth) {
-            synth.onvoiceschanged = () => {
-                availableVoices = synth.getVoices();
-            };
+        if (synth.speaking) {
+          synth.cancel();
         }
 
-        function showSubtitle(text) {
-            const subBox = document.getElementById('subtitle-text');
-            subBox.innerText = text;
-            subBox.style.opacity = 1;
-            setTimeout(() => {
-                subBox.style.opacity = 0;
-            }, 6000);
+        const utterThis = new SpeechSynthesisUtterance(text);
+        utterThis.pitch = 0.8;
+        utterThis.rate = 0.9;
+        utterThis.volume = 1.0;
+        if (availableVoices.length === 0) {
+          availableVoices = synth.getVoices();
         }
-
-        function speak(text) {
-            showSubtitle(text);
-
-            if (!synth) {
-                return;
-            }
-
-            if (synth.speaking) {
-                synth.cancel();
-            }
-
-            const utterThis = new SpeechSynthesisUtterance(text);
-            utterThis.pitch = 0.8;
-            utterThis.rate = 0.9;
-            utterThis.volume = 1.0;
-            if (availableVoices.length === 0) {
-                availableVoices = synth.getVoices();
-            }
-            const preferredVoice =
-                availableVoices.find(v => v.name && v.name.includes("Google US English")) ||
-                availableVoices.find(v => v.lang && v.lang.startsWith('en')) ||
-                null;
-            if (preferredVoice) {
-                utterThis.voice = preferredVoice;
-            }
-            synth.speak(utterThis);
+        const preferredVoice =
+          availableVoices.find(v => v.name && v.name.includes('Google US English')) ||
+          availableVoices.find(v => v.lang && v.lang.startsWith('en')) ||
+          null;
+        if (preferredVoice) {
+          utterThis.voice = preferredVoice;
         }
+        synth.speak(utterThis);
+      }
 
-        // --- MAIN LOOP ---
+      // --- MAIN LOOP ---
 
-        function animate() {
-            requestAnimationFrame(animate);
+      function animate() {
+        requestAnimationFrame(animate);
 
-            const time = (Date.now() - startTime) * 0.001;
-            
-            // Orbit Control Logic based on mouse
-            // Smooth damping
-            params.angleX += (mouseX * 2.0 - params.angleX) * 0.05;
-            params.angleY += (mouseY * 1.5 - params.angleY) * 0.05;
+        const time = (Date.now() - startTime) * 0.001;
 
-            // Calculate Camera Position on Sphere
-            const radius = params.zoom;
-            const baseAz = THREE.MathUtils.degToRad(params.azimuthBase);
-            const baseEl = THREE.MathUtils.degToRad(params.elevationBase);
-            const camAz = time * 0.1 + params.angleX + baseAz;
-            const camEl = params.angleY + baseEl;
-            const camX = radius * Math.sin(camAz) * Math.cos(camEl);
-            const camY = radius * Math.sin(camEl);
-            const camZ = radius * Math.cos(camAz) * Math.cos(camEl);
+        // Orbit Control Logic based on mouse
+        // Smooth damping
+        params.angleX += (mouseX * 2.0 - params.angleX) * 0.05;
+        params.angleY += (mouseY * 1.5 - params.angleY) * 0.05;
 
-            // Update Uniforms
-            material.uniforms.iTime.value = time;
-            material.uniforms.iCameraPos.value.set(camX, camY, camZ);
-            material.uniforms.iCameraDir.value.set(0, 0, 0); // Look at origin
-            
-            // Calculate dynamic UP vector to keep camera stable
-            // We construct a lookAt matrix manually logic for the shader
-            const forward = new THREE.Vector3(0,0,0).sub(new THREE.Vector3(camX, camY, camZ)).normalize();
-            const right = new THREE.Vector3(0,1,0).cross(forward).normalize();
-            const up = forward.clone().cross(right).normalize();
-            material.uniforms.iCameraUp.value.copy(up);
-            
-            material.uniforms.iMass.value = params.mass;
-            material.uniforms.iDiskDensity.value = params.density;
-            material.uniforms.iSpin.value = params.spin;
-            material.uniforms.iInclination.value = THREE.MathUtils.degToRad(params.inclination);
-            material.uniforms.iExposure.value = params.exposure;
-            material.uniforms.iDoppler.value = params.doppler;
+        // Calculate Camera Position on Sphere
+        const radius = params.zoom;
+        const baseAz = THREE.MathUtils.degToRad(params.azimuthBase);
+        const baseEl = THREE.MathUtils.degToRad(params.elevationBase);
+        const camAz = time * 0.1 + params.angleX + baseAz;
+        const camEl = params.angleY + baseEl;
+        const camX = radius * Math.sin(camAz) * Math.cos(camEl);
+        const camY = radius * Math.sin(camEl);
+        const camZ = radius * Math.cos(camAz) * Math.cos(camEl);
 
-            renderer.render(scene, camera);
-        }
+        // Update Uniforms
+        material.uniforms.iTime.value = time;
+        material.uniforms.iCameraPos.value.set(camX, camY, camZ);
+        material.uniforms.iCameraDir.value.set(0, 0, 0); // Look at origin
 
-        init();
+        // Calculate dynamic UP vector to keep camera stable
+        // We construct a lookAt matrix manually logic for the shader
+        const forward = new THREE.Vector3(0, 0, 0).sub(new THREE.Vector3(camX, camY, camZ)).normalize();
+        const right = new THREE.Vector3(0, 1, 0).cross(forward).normalize();
+        const up = forward.clone().cross(right).normalize();
+        material.uniforms.iCameraUp.value.copy(up);
 
+        material.uniforms.iMass.value = params.mass;
+        material.uniforms.iDiskDensity.value = params.density;
+        material.uniforms.iSpin.value = params.spin;
+        material.uniforms.iInclination.value = THREE.MathUtils.degToRad(params.inclination);
+        material.uniforms.iExposure.value = params.exposure;
+        material.uniforms.iDoppler.value = params.doppler;
+
+        renderer.render(scene, camera);
+      }
+
+      init();
     </script>
-</body>
+  </body>
 </html>
