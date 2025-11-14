@@ -831,17 +831,9 @@ class BlackHoleCard {
       )
       .join("");
     this.latestTelemetry = { massSolar, spin, gravRadius, isco, photon, redshift, beta, observer };
-    this._updateFormulaPanel(this.latestTelemetry);
-    if (this.consoleLive) {
-      this._evaluateFormulas(false);
-    }
-  }
-
-  _updateFormulaPanel(payload) {
-    if (!this.formulaPanel || !payload) return;
-    const { massSolar, gravRadius, spin, isco, photon, redshift, beta } = payload;
-    const massKg = massSolar * SOLAR_MASS;
-    this.formulaPanel.textContent = `R_g = 2GM / c²
+    if (this.formulaPanel) {
+      const massKg = massSolar * SOLAR_MASS;
+      this.formulaPanel.textContent = `R_g = 2GM / c²
   = 2 × ${G} × ${massKg.toExponential(3)} / ${C}²
   = ${gravRadius.toExponential(4)} m
 
@@ -852,6 +844,10 @@ z = 1/√(1 - 2/r + a²/r²) - 1
   r = r_ph + 0.05 → z = ${redshift.toFixed(4)}
 
 β = r·ω/c,  ω = 1/(r^{3/2} + a) → β = ${beta.toFixed(4)}`;
+    }
+    if (this.consoleLive) {
+      this._evaluateFormulas(false);
+    }
   }
 
   _initFormulaConsole() {
