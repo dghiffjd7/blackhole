@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gargantua Black Hole Simulation - Final Fix</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #000;
+        overflow: hidden;
+        font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        color: white;
+      }
+
+      #canvas-container {
+        width: 100vw;
+        height: 100vh;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1;
+      }
+
+      /* Sci-Fi Card UI Overlay */
+      .ui-layer {
+        position: absolute;
+        z-index: 10;
+        pointer-events: none; /* Allow clicking through to canvas */
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .header {
+        text-shadow: 0 0 10px rgba(255, 166, 0, 0.7);
+      }
+
+      h1 {
+        margin: 0;
+        font-weight: 300;
+        letter-spacing: 8px;
+        font-size: 1.5rem;
+        text-transform: uppercase;
+        color: #ffcc80;
+        border-left: 3px solid #ff9900;
+        padding-left: 15px;
+      }
+
+      .subtitle {
+        font-size: 0.8rem;
+        color: #aaa;
+        margin-left: 20px;
+        margin-top: 5px;
+        letter-spacing: 2px;
+      }
+
+      .data-panel {
+        align-self: flex-end;
+        background: rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(5px);
+        padding: 20px;
+        border-radius: 4px;
+        max-width: 300px;
+        border-right: 2px solid #ff9900;
+      }
+
+      .data-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+      }
+
+      .label {
+        color: #888;
+      }
+
+      .value {
+        color: #fff;
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+      }
+
+      .loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #ff9900;
+        font-size: 1.2rem;
+        z-index: 20;
+        transition: opacity 0.5s;
+      }
+
+      /* Scanlines effect */
+      .scanlines {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0),
+          rgba(255, 255, 255, 0) 50%,
+          rgba(0, 0, 0, 0.1) 50%,
+          rgba(0, 0, 0, 0.1)
+        );
+        background-size: 100% 4px;
+        z-index: 5;
+        pointer-events: none;
+        opacity: 0.3;
+      }
+
+      .vignette {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        box-shadow: 0 0 150px rgba(0, 0, 0, 0.9) inset;
+        pointer-events: none;
+        z-index: 6;
+      }
+
+      .ghost-button {
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: transparent;
+        color: #dca868;
+        padding: 8px 16px;
+        border-radius: 999px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+
+      #ui-panel {
+        position: fixed;
+        top: 24px;
+        left: 24px;
+        width: min(360px, calc(100vw - 48px));
+        max-height: calc(100vh - 48px);
+        overflow-y: auto;
+        padding: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-left: 4px solid #dca868;
+        border-radius: 20px;
+        background: rgba(10, 12, 18, 0.92);
+        box-shadow: 0 35px 90px rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(10px);
+        z-index: 15;
+      }
+
+      #toggle-panel {
+        position: fixed;
+        top: 24px;
+        left: 400px;
+        z-index: 16;
+        border: 1px solid #dca868;
+        border-radius: 999px;
+        background: transparent;
+        color: #dca868;
+        padding: 8px 16px;
+        letter-spacing: 0.12em;
+        cursor: pointer;
+      }
+
+      .panel-header h2 {
+        margin: 0;
+        font-size: 1.4rem;
+        letter-spacing: 0.1em;
+      }
+
+      .panel-header .eyebrow {
+        text-transform: uppercase;
+        letter-spacing: 0.3em;
+        color: #8899b8;
+        margin: 0 0 6px;
+        font-size: 0.65rem;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin: 16px 0;
+      }
+
+      .tab {
+        flex: 1;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: transparent;
+        color: #9fb2d6;
+        padding: 8px 12px;
+        border-radius: 999px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-size: 0.75rem;
+        cursor: pointer;
+      }
+
+      .tab.is-active {
+        border-color: #dca868;
+        background: rgba(220, 168, 104, 0.15);
+        color: #fff;
+      }
+
+      .tabpanel {
+        display: none;
+      }
+
+      .tabpanel.is-active {
+        display: block;
+      }
+
+      .controls-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .control-group label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: #8899b8;
+      }
+
+      .control-group label span {
+        color: #dca868;
+      }
+
+      input[type='range'] {
+        width: 100%;
+        appearance: none;
+        background: transparent;
+      }
+
+      input[type='range']::-webkit-slider-runnable-track {
+        height: 4px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 2px;
+      }
+
+      input[type='range']::-webkit-slider-thumb {
+        appearance: none;
+        height: 14px;
+        width: 14px;
+        border-radius: 50%;
+        background: #dca868;
+        margin-top: -5px;
+        box-shadow: 0 0 8px rgba(220, 168, 104, 0.7);
+      }
+
+      .telemetry-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        font-size: 0.85rem;
+        margin: 16px 0;
+      }
+
+      .telemetry-card {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 12px;
+        padding: 10px;
+        background: rgba(5, 7, 12, 0.7);
+      }
+
+      #subtitle-box {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 50;
+        pointer-events: none;
+      }
+
+      #subtitle-text {
+        background: rgba(0, 0, 0, 0.6);
+        color: #f3f6ff;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        letter-spacing: 0.08em;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+      }
+
+      .telemetry-card span:last-child {
+        color: #dca868;
+        float: right;
+      }
+
+      .calc-console {
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 16px;
+        padding: 12px;
+        background: rgba(1, 3, 8, 0.85);
+        margin-top: 18px;
+      }
+
+      .console-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .console-header h3 {
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        font-size: 0.85rem;
+        color: #dca868;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 6px;
+      }
+
+      .pill-button {
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: transparent;
+        color: #dca868;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        cursor: pointer;
+      }
+
+      .pill-button.active {
+        border-color: #dca868;
+        background: #dca868;
+        color: #000;
+      }
+
+      .info-button {
+        border: 1px solid #445;
+        background: transparent;
+        color: #dca868;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        font-size: 14px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #system-tooltip {
+        position: fixed;
+        top: 60px;
+        right: auto;
+        width: 260px;
+        background: rgba(20, 24, 30, 0.95);
+        color: #d1e9ff;
+        padding: 10px;
+        border: 1px solid #445;
+        border-radius: 8px;
+        font-size: 0.7rem;
+        line-height: 1.4;
+        display: none;
+        z-index: 999;
+        cursor: grab;
+      }
+
+      #system-tooltip.visible {
+        display: block;
+      }
+
+      .calc-console.fullscreen {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        width: calc(100vw - 40px);
+        height: calc(100vh - 40px);
+        z-index: 200;
+        background: rgba(3, 5, 10, 0.95);
+        border-width: 2px;
+        backdrop-filter: blur(6px);
+        cursor: grab;
+      }
+
+      .calc-console.fullscreen #formula-input {
+        min-height: calc(100vh - 260px);
+      }
+
+      #formula-input {
+        width: 100%;
+        min-height: 80px;
+        border: 1px solid #445;
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.4);
+        color: #f7f8ff;
+        font-family: 'JetBrains Mono', Consolas, monospace;
+        font-size: 0.8rem;
+        padding: 8px;
+      }
+
+      #suggestion-list {
+        display: none;
+        border: 1px solid #334;
+        border-radius: 8px;
+        background: rgba(5, 7, 12, 0.85);
+        margin-top: 8px;
+        max-height: 120px;
+        overflow-y: auto;
+        font-size: 0.75rem;
+      }
+
+      #suggestion-list.visible {
+        display: block;
+      }
+
+      .suggestion-item {
+        padding: 6px 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        cursor: pointer;
+      }
+
+      .suggestion-item:hover {
+        background: rgba(220, 168, 104, 0.15);
+      }
+
+      .console-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      #formula-output {
+        margin-top: 10px;
+        color: #a5d9ff;
+        font-size: 0.75rem;
+        min-height: 40px;
+      }
+    </style>
+
+    <!-- Three.js Libraries from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+  </head>
+  <body>
+    <div id="loading" class="loading">系統初始化中...</div>
+
+    <div class="ui-layer">
+      <div class="header">
+        <h1>Gargantua</h1>
+        <div class="subtitle">超大質量黑洞實時觀測終端</div>
+      </div>
+
+      <div class="data-panel">
+        <div class="data-row">
+          <span class="label">質量 (Mass)</span>
+          <span class="value">100M ☉</span>
+        </div>
+        <div class="data-row">
+          <span class="label">自旋 (Spin)</span>
+          <span class="value">0.998 c</span>
+        </div>
+        <div class="data-row">
+          <span class="label">事件視界</span>
+          <span class="value">~300 km</span>
+        </div>
+        <div class="data-row">
+          <span class="label">距離</span>
+          <span class="value">~10 Gly</span>
+        </div>
+        <div style="margin-top: 10px; font-size: 0.7rem; color: #666; border-top: 1px solid #333; padding-top: 5px">
+          點擊並拖曳以旋轉視角<br />滾輪縮放
+        </div>
+      </div>
+    </div>
+
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+    <div id="canvas-container"></div>
+    <button id="toggle-panel" class="ghost-button">收合控制台</button>
+    <aside id="ui-panel">
+      <div class="panel-header">
+        <p class="eyebrow">branch / cinematic</p>
+        <h2>Relativistic Console</h2>
+        <p class="subtitle">參數驅動 · 科學推導</p>
+      </div>
+      <div class="tabs">
+        <button class="tab is-active" data-tab-target="controls">System Controls</button>
+        <button class="tab" data-tab-target="telemetry">Relativistic Data</button>
+      </div>
+      <section id="tab-controls" class="tabpanel is-active">
+        <div class="controls-grid">
+          <div class="control-group">
+            <label>質量 (10⁸ M☉) <span data-value="mass">6.5</span></label>
+            <input id="control-mass" type="range" min="1" max="15" step="0.1" value="6.5" />
+          </div>
+          <div class="control-group">
+            <label>自旋 a <span data-value="spin">0.95</span></label>
+            <input id="control-spin" type="range" min="0" max="0.998" step="0.001" value="0.95" />
+          </div>
+          <div class="control-group">
+            <label>傾角 (°) <span data-value="inclination">60</span></label>
+            <input id="control-inclination" type="range" min="0" max="90" step="1" value="60" />
+          </div>
+          <div class="control-group">
+            <label>Doppler 助推 <span data-value="doppler">1.5</span></label>
+            <input id="control-doppler" type="range" min="0.5" max="3" step="0.05" value="1.5" />
+          </div>
+          <div class="control-group">
+            <label>曝光/溫度 <span data-value="exposure">1.1</span></label>
+            <input id="control-exposure" type="range" min="0.6" max="1.6" step="0.02" value="1.1" />
+          </div>
+          <div class="control-group">
+            <label>觀測距離 (Rg) <span data-value="zoom">60</span></label>
+            <input id="control-zoom" type="range" min="10" max="200" step="1" value="60" />
+          </div>
+          <div class="control-group">
+            <label>視角方位 (°) <span data-value="azimuth">0</span></label>
+            <input id="control-azimuth" type="range" min="0" max="360" step="0.1" value="0" />
+          </div>
+          <div class="control-group">
+            <label>視角仰角 (°) <span data-value="elevation">20</span></label>
+            <input id="control-elevation" type="range" min="0" max="360" step="0.1" value="20" />
+          </div>
+        </div>
+        <div style="margin-top: 16px; display: flex; gap: 10px">
+          <button id="btn-reset" class="pill-button" style="flex: 1">Reset</button>
+          <button id="btn-back-main" class="pill-button" style="flex: 1">Main Card</button>
+        </div>
+        <div style="margin-top: 16px">
+          <button id="narrate-intro" class="pill-button" style="width: 100%">Narrate: Introduction</button>
+          <button id="narrate-lensing" class="pill-button" style="width: 100%; margin-top: 6px">
+            Narrate: Lensing
+          </button>
+          <button id="narrate-horizon" class="pill-button" style="width: 100%; margin-top: 6px">
+            Narrate: Horizon
+          </button>
+        </div>
+      </section>
+      <section id="tab-telemetry" class="tabpanel">
+        <div class="telemetry-grid">
+          <div class="telemetry-card">
+            <div>R<sub>g</sub><span id="metric-rg">--</span></div>
+            <div>ISCO<span id="metric-isco">--</span></div>
+            <div>Photon<span id="metric-photon">--</span></div>
+          </div>
+          <div class="telemetry-card">
+            <div>z<span id="metric-redshift">--</span></div>
+            <div>β<span id="metric-beta">--</span></div>
+            <div>Time Dil.<span id="metric-time">--</span></div>
+          </div>
+          <div class="telemetry-card">
+            <div>Boost<span id="metric-doppler">--</span></div>
+            <div>Period<span id="metric-period">--</span></div>
+            <div>Flux<span id="metric-flux">--</span></div>
+          </div>
+        </div>
+        <pre id="formula-panel"></pre>
+        <section class="calc-console" id="calc-console">
+          <div class="console-header">
+            <h3>自定義計算</h3>
+            <div class="header-actions">
+              <button id="console-fullscreen" class="pill-button">⤢</button>
+              <button id="console-toggle" class="pill-button active">LIVE</button>
+              <div style="position: relative">
+                <button id="console-info" class="info-button">❗</button>
+              </div>
+            </div>
+          </div>
+          <div id="system-tooltip">
+            可用變數：r,Rg,a,beta,incl,photon,z,ISCO。<br />
+            例：doppler = sqrt((1+beta)/(1-beta))<br />
+            zoom = Rg / 5e9<br />
+            inclination = 45<br /><br />
+            支援運算：+ - * / () pow sqrt sin cos tan log exp。<br />
+            可拖曳此視窗，點擊視窗關閉。
+          </div>
+          <textarea id="formula-input" spellcheck="false">doppler = sqrt((1+beta)/(1-beta))
+inclination = 45
+zoom = 60</textarea>
+          <div id="suggestion-list"></div>
+          <div class="console-actions">
+            <button id="apply-formula" class="pill-button active">套用結果</button>
+            <button id="clear-formula" class="pill-button">重設文字</button>
+          </div>
+          <div id="formula-output"></div>
+        </section>
+      </section>
+    </aside>
+    <div id="subtitle-box"><div id="subtitle-text"></div></div>
+
+    <script>
+      // --- Simplex Noise function (Corrected GLSL syntax) ---
+      const snoise = `
+            vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
+
+            float snoise(vec2 v) {
+                const vec4 C = vec4(0.211324865405187,  // (3.0-sqrt(3.0))/6.0
+                                    0.366025403784439,  // 0.5*(sqrt(3.0)-1.0)
+                                   -0.577350269189626,  // -1.0 + 2.0 * C.x
+                                    0.024390243902439); // 1.0 / 41.0
+                vec2 i  = floor(v + dot(v, C.yy) );
+                vec2 x0 = v -   i + dot(i, C.xx);
+                vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+                vec4 x12 = x0.xyxy + C.xxzz;
+                x12.xy -= i1;
+                
+                i = mod289(i); 
+                vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
+                                + i.x + vec3(0.0, i1.x, 1.0 ));
+
+                vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+                m = m*m ;
+                m = m*m ;
+
+                vec3 x = 2.0 * fract(p * C.www) - 1.0;
+                vec3 h = abs(x) - 0.5;
+                vec3 ox = floor(x + 0.5);
+                vec3 a0 = x - ox;
+
+                m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+
+                vec3 g;
+                g.x  = a0.x  * x0.x  + h.x  * x0.y;
+                g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+                return 130.0 * dot(m, g);
+            }
+        `;
+
+      // --- Particle Vertex Shader ---
+      const particleVertexShader = `
+            attribute float p_size;
+            attribute float p_offset_angle;
+            attribute float p_offset_radius;
+            attribute float p_speed_mult;
+            attribute vec3 p_color_base;
+            attribute float p_spin_dir;
+
+            uniform float time;
+            uniform float rotation_speed;
+            uniform float noise_strength;
+            uniform float disk_inner_radius;
+            uniform float disk_outer_radius;
+            uniform float vertical_thickness;
+            uniform float camera_y;
+
+            varying vec3 vColor;
+            varying float vAlpha;
+            
+            ${snoise} 
+
+            void main() {
+                vec3 pos = position;
+
+                // Rotation logic
+                float current_rotation_speed = rotation_speed * (pow(disk_outer_radius / p_offset_radius, 1.5)) * p_speed_mult * p_spin_dir;
+                float current_angle = p_offset_angle + time * current_rotation_speed;
+                
+                // Noise Logic
+                float noise_scale_fine = 1.0 / (p_offset_radius * 0.5 + 1.0); 
+                float noiseX1 = snoise(vec2(current_angle * 15.0 + time * 1.2, p_offset_radius * 8.0 + time * 0.5)) * noise_strength * noise_scale_fine;
+                float noiseY1 = snoise(vec2(current_angle * 12.0 + time * 1.5, p_offset_radius * 9.0 + time * 0.7)) * noise_strength * noise_scale_fine * 0.5;
+
+                float noise_scale_coarse = 1.0 / (p_offset_radius * 0.2 + 1.0);
+                float noiseX2 = snoise(vec2(current_angle * 5.0 + time * 0.3, p_offset_radius * 2.0 + time * 0.1)) * noise_strength * noise_scale_coarse * 0.5;
+                float noiseY2 = snoise(vec2(current_angle * 4.0 + time * 0.4, p_offset_radius * 3.0 + time * 0.2)) * noise_strength * noise_scale_coarse * 0.3;
+
+                float final_radius = p_offset_radius + noiseX1 + noiseX2;
+                pos.x = final_radius * cos(current_angle);
+                pos.y = final_radius * sin(current_angle);
+                // Calculate Z (vertical thickness)
+                pos.z = (noiseY1 + noiseY2) * vertical_thickness * (1.0 - pow(abs(p_offset_radius - disk_inner_radius) / (disk_outer_radius - disk_inner_radius), 2.0));
+
+                // Color Logic
+                float r_norm = (p_offset_radius - disk_inner_radius) / (disk_outer_radius - disk_inner_radius);
+                
+                vec3 colorInner = vec3(1.0, 1.0, 1.0); 
+                vec3 colorYellow = vec3(1.0, 0.9, 0.4); 
+                vec3 colorOrange = vec3(1.0, 0.5, 0.1); 
+                vec3 colorRed = vec3(0.8, 0.1, 0.0);   
+
+                if (r_norm < 0.2) { 
+                     vColor = mix(colorInner, colorYellow, r_norm / 0.2);
+                } else if (r_norm < 0.5) { 
+                     vColor = mix(colorYellow, colorOrange, (r_norm - 0.2) / 0.3);
+                } else { 
+                     vColor = mix(colorOrange, colorRed, (r_norm - 0.5) / 0.5);
+                }
+                
+                vColor *= p_color_base;
+
+                // Brightness
+                float brightness_factor = 1.0;
+                if (r_norm < 0.1) brightness_factor = 5.0; 
+                else if (r_norm < 0.4) brightness_factor = mix(5.0, 1.5, (r_norm - 0.1) / 0.3);
+                else brightness_factor = mix(1.5, 0.5, (r_norm - 0.4) / 0.6);
+                
+                vColor *= brightness_factor;
+
+                // Alpha
+                vAlpha = smoothstep(0.0, 0.05, r_norm) * (1.0 - smoothstep(0.9, 1.0, r_norm));
+                vAlpha *= (1.0 - smoothstep(0.0, 0.5, abs(pos.z) / (vertical_thickness * disk_outer_radius * 0.5))); 
+                vAlpha *= p_size * 0.5; 
+
+                vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                gl_PointSize = p_size * (600.0 / -mvPosition.z) * (1.0 - smoothstep(0.0, 0.5, r_norm)); 
+                gl_Position = projectionMatrix * mvPosition;
+            }
+        `;
+
+      // --- Particle Fragment Shader ---
+      const particleFragmentShader = `
+            uniform sampler2D pointTexture;
+            varying vec3 vColor;
+            varying float vAlpha;
+
+            void main() {
+                vec2 coords = gl_PointCoord - 0.5;
+                float dist = length(coords);
+                if (dist > 0.5) {
+                    discard;
+                }
+                
+                float alpha_grad = smoothstep(0.5, 0.0, dist);
+                gl_FragColor = vec4(vColor, vAlpha * alpha_grad * (1.0 - dist*0.5)); 
+            }
+        `;
+
+      // --- Lensing Shader ---
+      const lensingShader = {
+        uniforms: {
+          tDiffuse: { value: null },
+          lensingCenter: { value: new THREE.Vector2(0.5, 0.5) },
+          lensingRadius: { value: 0.1 },
+          lensingStrength: { value: 1.0 },
+          aspectRatio: { value: 1.0 },
+        },
+        vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+        fragmentShader: `
+                uniform sampler2D tDiffuse;
+                uniform vec2 lensingCenter;
+                uniform float lensingRadius;
+                uniform float lensingStrength;
+                uniform float aspectRatio; 
+                varying vec2 vUv;
+
+                vec2 lensDistort(vec2 uv, vec2 center, float radius, float strength) {
+                    vec2 p = (uv - center) * vec2(aspectRatio, 1.0); 
+                    float r = length(p);
+                    float angle = atan(p.y, p.x);
+
+                    float rs = radius; 
+                    
+                    float distorted_r = r;
+                    if (r < rs * 2.5) { // Range of distortion
+                        float normalized_r = r / (rs * 2.5);
+                        // Interstellar-style distortion approximation
+                        distorted_r = rs * (normalized_r * (1.0 + strength) - strength * normalized_r * normalized_r);
+                        distorted_r = max(0.0, distorted_r); 
+                    }
+                    
+                    vec2 distorted_p = vec2(cos(angle), sin(angle)) * distorted_r;
+                    return center + distorted_p / vec2(aspectRatio, 1.0); 
+                }
+
+                void main() {
+                    vec2 distorted_uv = lensDistort(vUv, lensingCenter, lensingRadius, lensingStrength);
+                    // Simple boundary check to avoid repeating textures at edges
+                    if (distorted_uv.x < 0.0 || distorted_uv.x > 1.0 || distorted_uv.y < 0.0 || distorted_uv.y > 1.0) {
+                        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+                    } else {
+                        gl_FragColor = texture2D(tDiffuse, distorted_uv);
+                    }
+                }
+            `,
+      };
+
+      // --- Main Application ---
+      let scene, camera, renderer, composer;
+      let blackHoleSphere;
+      let accretionDiskParticles, warpedAccretionDiskGeometry;
+      let stars;
+      let controls;
+
+      const BH_RADIUS = 2.0;
+      const DISK_INNER_RADIUS = BH_RADIUS * 1.05;
+      const DISK_OUTER_RADIUS = BH_RADIUS * 7.0;
+      const PARTICLE_COUNT = 250000; // High count for detail
+      const STAR_COUNT = 200000;
+      const VERTICAL_THICKNESS_FACTOR = 0.5;
+
+      const SOLAR_MASS = 1.98847e30;
+      const G = 6.67430e-11;
+      const C = 299792458;
+
+      const uiState = {
+        mass: 6.5,
+        spin: 0.95,
+        inclination: 60,
+        doppler: 1.5,
+        exposure: 1.1,
+        zoom: 60,
+        azimuth: 0,
+        elevation: 20,
+      };
+
+      const sliders = {};
+      const displayRefs = {
+        mass: document.querySelector('[data-value="mass"]'),
+        spin: document.querySelector('[data-value="spin"]'),
+        inclination: document.querySelector('[data-value="inclination"]'),
+        doppler: document.querySelector('[data-value="doppler"]'),
+        exposure: document.querySelector('[data-value="exposure"]'),
+        zoom: document.querySelector('[data-value="zoom"]'),
+        azimuth: document.querySelector('[data-value="azimuth"]'),
+        elevation: document.querySelector('[data-value="elevation"]'),
+      };
+
+      const telemetryRefs = {
+        rg: document.getElementById('metric-rg'),
+        isco: document.getElementById('metric-isco'),
+        photon: document.getElementById('metric-photon'),
+        redshift: document.getElementById('metric-redshift'),
+        beta: document.getElementById('metric-beta'),
+        time: document.getElementById('metric-time'),
+        doppler: document.getElementById('metric-doppler'),
+        period: document.getElementById('metric-period'),
+        flux: document.getElementById('metric-flux'),
+      };
+
+      const calcConsole = document.getElementById('calc-console');
+      const suggestionList = document.getElementById('suggestion-list');
+      const formulaPanel = document.getElementById('formula-panel');
+      const formulaInput = document.getElementById('formula-input');
+      const formulaOutput = document.getElementById('formula-output');
+      const consoleToggle = document.getElementById('console-toggle');
+      const consoleFullscreen = document.getElementById('console-fullscreen');
+      const consoleInfo = document.getElementById('console-info');
+      const consoleTooltip = document.getElementById('system-tooltip');
+      const applyFormulaBtn = document.getElementById('apply-formula');
+      const clearFormulaBtn = document.getElementById('clear-formula');
+      let consoleLive = true;
+
+      const formulaSuggestions = [
+        { label: 'z = 1/sqrt(1 - 2/r + a^2/r^2) - 1', insert: 'z = 1/sqrt(1 - 2/r + a^2/r^2) - 1' },
+        { label: 'doppler = sqrt((1+beta)/(1-beta))', insert: 'doppler = sqrt((1+beta)/(1-beta))' },
+        { label: 'inclination = atan(beta) * 180 / PI', insert: 'inclination = atan(beta) * 180 / PI' },
+        { label: 'zoom = Rg / 5e9', insert: 'zoom = Rg / 5e9' },
+        { label: 'spin = min(0.998, spin + 0.01)', insert: 'spin = min(0.998, spin + 0.01)' },
+      ];
+
+      const narrationClips = {
+        initial: new Audio('audio/Initial Narration.mp3'),
+        intro: new Audio('audio/narrate-intro.mp3'),
+        lensing: new Audio('audio/narrate-lensing.mp3'),
+        horizon: new Audio('audio/narrate-horizon.mp3'),
+      };
+      Object.values(narrationClips).forEach((clip) => {
+        clip.preload = 'auto';
+        clip.crossOrigin = 'anonymous';
+        clip.volume = 0.85;
+      });
+
+      const wrap360 = (deg) => ((deg % 360) + 360) % 360;
+      const toRadians = (deg) => (deg * Math.PI) / 180;
+
+      function gravitationalRadiusMeters(massSolar) {
+        return (2 * G * massSolar * SOLAR_MASS) / (C * C);
+      }
+
+      function iscoRadiusRg(spin) {
+        const a = Math.min(Math.max(spin, -0.998), 0.998);
+        const term = Math.cbrt(1 - a * a);
+        const z1 = 1 + term * (Math.cbrt(1 + a) + Math.cbrt(1 - a));
+        const z2 = Math.sqrt(3 * a * a + z1 * z1);
+        const sign = a >= 0 ? 1 : -1;
+        return 3 + z2 - sign * Math.sqrt((3 - z1) * (3 + z1 + 2 * z2));
+      }
+
+      function photonRadiusRg(spin) {
+        const a = Math.abs(Math.min(Math.max(spin, -0.999), 0.999));
+        const angle = (2 / 3) * Math.acos(-a);
+        return 2 * (1 + Math.cos(angle));
+      }
+
+      function gravitationalRedshiftRg(rRg, spin) {
+        const r = Math.max(rRg, 1.0001);
+        const a = Math.min(Math.max(spin, -0.998), 0.998);
+        const gm = 1 - 2 / r + (a * a) / (r * r);
+        return 1 / Math.sqrt(Math.max(gm, 1e-6)) - 1;
+      }
+
+      function orbitalBeta(rRg, spin) {
+        const r = Math.max(rRg, 1.0001);
+        const omega = 1 / (Math.pow(r, 1.5) + spin);
+        return Math.min(Math.abs((r * omega) / C), 0.99);
+      }
+
+      function init() {
+        const container = document.getElementById('canvas-container');
+
+        scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.0005);
+
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 6, 22);
+        camera.lookAt(0, 0, 0);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Optimize for performance
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        container.appendChild(renderer.domElement);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 5;
+        controls.maxDistance = 150;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.2;
+
+        createStars();
+        createBlackHole();
+        createAccretionDiskParticles();
+
+        // Post-processing
+        const renderScene = new THREE.RenderPass(scene, camera);
+
+        const bloomPass = new THREE.UnrealBloomPass(
+          new THREE.Vector2(window.innerWidth, window.innerHeight),
+          1.5,
+          0.8,
+          0.05,
+        );
+
+        const lensingPass = new THREE.ShaderPass(lensingShader);
+        lensingPass.uniforms.aspectRatio.value = window.innerWidth / window.innerHeight;
+
+        composer = new THREE.EffectComposer(renderer);
+        composer.addPass(renderScene);
+        composer.addPass(bloomPass);
+        composer.addPass(lensingPass);
+
+        document.getElementById('loading').style.opacity = 0;
+        setTimeout(() => (document.getElementById('loading').style.display = 'none'), 500);
+        playNarration('initial', 'Simulation Initialized. Viewing Target: Gargantua. A supermassive rotating black hole.');
+
+        window.addEventListener('resize', onWindowResize, false);
+        animate();
+      }
+
+      function createStars() {
+        const starGeometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(STAR_COUNT * 3);
+        const colors = new Float32Array(STAR_COUNT * 3);
+        const sizes = new Float32Array(STAR_COUNT);
+
+        for (let i = 0; i < STAR_COUNT; i++) {
+          const i3 = i * 3;
+          // Distribution: More chaotic background
+          const r = Math.random() * 400 + 20;
+          const theta = Math.random() * Math.PI * 2;
+          const phi = Math.acos(2 * Math.random() - 1);
+
+          positions[i3] = r * Math.sin(phi) * Math.cos(theta);
+          positions[i3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+          positions[i3 + 2] = r * Math.cos(phi);
+
+          const color = new THREE.Color();
+          color.setHSL(Math.random(), 0.8, Math.random() * 0.5 + 0.5);
+          colors[i3] = color.r;
+          colors[i3 + 1] = color.g;
+          colors[i3 + 2] = color.b;
+
+          sizes[i] = Math.random() * 0.3;
+        }
+
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        starGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        starGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+        const starMaterial = new THREE.PointsMaterial({
+          size: 0.1,
+          sizeAttenuation: true,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.8,
+          blending: THREE.AdditiveBlending,
+        });
+
+        stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+      }
+
+      function createBlackHole() {
+        const sphereGeo = new THREE.SphereGeometry(BH_RADIUS * 0.95, 64, 64);
+        const sphereMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        blackHoleSphere = new THREE.Mesh(sphereGeo, sphereMat);
+        scene.add(blackHoleSphere);
+      }
+
+      function createAccretionDiskParticles() {
+        const geometry = new THREE.BufferGeometry();
+
+        const positions = new Float32Array(PARTICLE_COUNT * 3);
+        const p_sizes = new Float32Array(PARTICLE_COUNT);
+        const p_offset_angles = new Float32Array(PARTICLE_COUNT);
+        const p_offset_radii = new Float32Array(PARTICLE_COUNT);
+        const p_speed_mults = new Float32Array(PARTICLE_COUNT);
+        const p_color_bases = new Float32Array(PARTICLE_COUNT * 3);
+        const p_spin_dirs = new Float32Array(PARTICLE_COUNT);
+
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+          const i3 = i * 3;
+          positions[i3] = 0;
+          positions[i3 + 1] = 0;
+          positions[i3 + 2] = 0;
+
+          p_offset_radii[i] = Math.random() * (DISK_OUTER_RADIUS - DISK_INNER_RADIUS) + DISK_INNER_RADIUS;
+          p_offset_angles[i] = Math.random() * Math.PI * 2;
+          p_sizes[i] = Math.random() * 0.3 + 0.1;
+          p_speed_mults[i] = Math.random() * 0.4 + 0.8;
+
+          // Interstellar Colors: Bright warm core to red edge
+          const color = new THREE.Color();
+          color.setHSL(0.05 + Math.random() * 0.05, 1.0, 0.6 + Math.random() * 0.4);
+          p_color_bases[i3] = color.r;
+          p_color_bases[i3 + 1] = color.g;
+          p_color_bases[i3 + 2] = color.b;
+
+          p_spin_dirs[i] = 1.0; // Unidirectional spin looks cleaner
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('p_size', new THREE.BufferAttribute(p_sizes, 1));
+        geometry.setAttribute('p_offset_angle', new THREE.BufferAttribute(p_offset_angles, 1));
+        geometry.setAttribute('p_offset_radius', new THREE.BufferAttribute(p_offset_radii, 1));
+        geometry.setAttribute('p_speed_mult', new THREE.BufferAttribute(p_speed_mults, 1));
+        geometry.setAttribute('p_color_base', new THREE.BufferAttribute(p_color_bases, 3));
+        geometry.setAttribute('p_spin_dir', new THREE.BufferAttribute(p_spin_dirs, 1));
+
+        const material = new THREE.ShaderMaterial({
+          uniforms: {
+            time: { value: 0 },
+            rotation_speed: { value: 0.3 },
+            noise_strength: { value: 0.3 },
+            disk_inner_radius: { value: DISK_INNER_RADIUS },
+            disk_outer_radius: { value: DISK_OUTER_RADIUS },
+            vertical_thickness: { value: VERTICAL_THICKNESS_FACTOR },
+            camera_y: { value: 0 },
+          },
+          vertexShader: particleVertexShader,
+          fragmentShader: particleFragmentShader,
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        });
+
+        accretionDiskParticles = new THREE.Points(geometry, material);
+        accretionDiskParticles.rotation.x = -Math.PI / 2;
+        scene.add(accretionDiskParticles);
+
+        // Vertical/Warped Disk (Simulating the back of the disk bent up)
+        const warpedMaterial = material.clone();
+        warpedMaterial.uniforms.vertical_thickness.value = VERTICAL_THICKNESS_FACTOR * 0.8;
+        warpedAccretionDiskGeometry = new THREE.Points(geometry, warpedMaterial);
+        warpedAccretionDiskGeometry.rotation.x = 0; // Stand up
+        warpedAccretionDiskGeometry.scale.set(1.0, 1.0, 1.0);
+        scene.add(warpedAccretionDiskGeometry);
+      }
+
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        composer.setSize(window.innerWidth, window.innerHeight);
+        if (composer.passes.length > 2) {
+          composer.passes[2].uniforms.aspectRatio.value = window.innerWidth / window.innerHeight;
+        }
+      }
+
+      function animate() {
+        requestAnimationFrame(animate);
+        const time = performance.now() * 0.001;
+
+        if (accretionDiskParticles) {
+          accretionDiskParticles.material.uniforms.time.value = time;
+          accretionDiskParticles.material.uniforms.camera_y.value = camera.position.y;
+          // Rotate disk
+          accretionDiskParticles.rotation.z = time * 0.05;
+        }
+        if (warpedAccretionDiskGeometry) {
+          warpedAccretionDiskGeometry.material.uniforms.time.value = time;
+          warpedAccretionDiskGeometry.material.uniforms.camera_y.value = camera.position.y;
+          // Vertical part rotates slightly differently to simulate flow
+          warpedAccretionDiskGeometry.rotation.y = time * 0.05;
+        }
+
+        if (stars) {
+          stars.rotation.y = time * 0.005;
+        }
+
+        controls.update();
+
+        // Update Lensing Uniforms
+        if (composer.passes.length > 2) {
+          const lensingPass = composer.passes[2];
+
+          const vector = new THREE.Vector3(0, 0, 0);
+          vector.project(camera);
+
+          // Map NDC to 0-1 UV
+          const cx = (vector.x + 1) / 2;
+          const cy = (vector.y + 1) / 2;
+          lensingPass.uniforms.lensingCenter.value.set(cx, cy);
+
+          // Dynamic Radius based on distance
+          const distance = camera.position.distanceTo(blackHoleSphere.position);
+          const fov = camera.fov * (Math.PI / 180);
+          // Approximate screen size of the BH radius
+          const screenRadius = Math.abs(BH_RADIUS / (distance * Math.tan(fov / 2)));
+
+          lensingPass.uniforms.lensingRadius.value = screenRadius * 0.4; // Tweak factor
+          lensingPass.uniforms.lensingStrength.value = 1.0;
+        }
+
+        composer.render();
+      }
+
+      init();
+      setupPanel();
+    </script>
+  </body>
+</html>
+      function showSubtitle(text) {
+        const box = document.getElementById('subtitle-text');
+        if (!box) return;
+        box.textContent = text;
+        box.style.opacity = 1;
+        clearTimeout(box._timer);
+        box._timer = setTimeout(() => {
+          box.style.opacity = 0;
+        }, 6000);
+      }
+
+      function playNarration(id, text) {
+        showSubtitle(text);
+        const clip = narrationClips[id];
+        if (!clip) return;
+        Object.values(narrationClips).forEach((audio) => {
+          audio.pause();
+          audio.currentTime = 0;
+        });
+        clip.play().catch(() => {});
+      }
+      function setupPanel() {
+        const toggle = document.getElementById('toggle-panel');
+        const panel = document.getElementById('ui-panel');
+        if (toggle && panel) {
+          toggle.addEventListener('click', () => {
+            panel.classList.toggle('collapsed');
+            if (panel.classList.contains('collapsed')) {
+              panel.style.transform = 'translateX(-110%)';
+              toggle.textContent = '展開控制台';
+            } else {
+              panel.style.transform = 'translateX(0)';
+              toggle.textContent = '收合控制台';
+            }
+          });
+        }
+        setupUI();
+        setupTabs();
+        setupConsole();
+        updateDisplay('mass', uiState.mass, 2);
+        updateDisplay('spin', uiState.spin, 3);
+        updateDisplay('inclination', uiState.inclination, 1);
+        updateDisplay('doppler', uiState.doppler, 2);
+        updateDisplay('exposure', uiState.exposure, 2);
+        updateDisplay('zoom', uiState.zoom, 0);
+        updateDisplay('azimuth', uiState.azimuth, 1);
+        updateDisplay('elevation', uiState.elevation, 1);
+        updateTelemetry();
+        applyStateToScene();
+        updateCameraFromState();
+      }
+
+      function setupUI() {
+        sliders.mass = document.getElementById('control-mass');
+        sliders.spin = document.getElementById('control-spin');
+        sliders.inclination = document.getElementById('control-inclination');
+        sliders.doppler = document.getElementById('control-doppler');
+        sliders.exposure = document.getElementById('control-exposure');
+        sliders.zoom = document.getElementById('control-zoom');
+        sliders.azimuth = document.getElementById('control-azimuth');
+        sliders.elevation = document.getElementById('control-elevation');
+
+        const bind = (slider, key, digits, callback) => {
+          if (!slider) return;
+          slider.addEventListener('input', (event) => {
+            uiState[key] = parseFloat(event.target.value);
+            updateDisplay(key, uiState[key], digits);
+            if (callback) callback();
+          });
+        };
+
+        bind(sliders.mass, 'mass', 2, () => {
+          updateTelemetry();
+          applyStateToScene();
+        });
+        bind(sliders.spin, 'spin', 3, () => {
+          updateTelemetry();
+          applyStateToScene();
+        });
+        bind(sliders.inclination, 'inclination', 1, () => {
+          updateTelemetry();
+          updateCameraFromState();
+        });
+        bind(sliders.doppler, 'doppler', 2, () => {
+          updateTelemetry();
+          applyStateToScene();
+        });
+        bind(sliders.exposure, 'exposure', 2, () => {
+          applyStateToScene();
+        });
+        bind(sliders.zoom, 'zoom', 0, () => {
+          updateCameraFromState();
+        });
+        bind(sliders.azimuth, 'azimuth', 1, () => {
+          updateCameraFromState();
+        });
+        bind(sliders.elevation, 'elevation', 1, () => {
+          updateCameraFromState();
+        });
+
+        const resetButton = document.getElementById('btn-reset');
+        if (resetButton) {
+          resetButton.addEventListener('click', () => {
+            Object.assign(uiState, {
+              mass: 6.5,
+              spin: 0.95,
+              inclination: 60,
+              doppler: 1.5,
+              exposure: 1.1,
+              zoom: 60,
+              azimuth: 0,
+              elevation: 20,
+            });
+            sliders.mass.value = uiState.mass;
+            sliders.spin.value = uiState.spin;
+            sliders.inclination.value = uiState.inclination;
+            sliders.doppler.value = uiState.doppler;
+            sliders.exposure.value = uiState.exposure;
+            sliders.zoom.value = uiState.zoom;
+            sliders.azimuth.value = uiState.azimuth;
+            sliders.elevation.value = uiState.elevation;
+            updateDisplay('mass', uiState.mass, 2);
+            updateDisplay('spin', uiState.spin, 3);
+            updateDisplay('inclination', uiState.inclination, 1);
+            updateDisplay('doppler', uiState.doppler, 2);
+            updateDisplay('exposure', uiState.exposure, 2);
+            updateDisplay('zoom', uiState.zoom, 0);
+            updateDisplay('azimuth', uiState.azimuth, 1);
+            updateDisplay('elevation', uiState.elevation, 1);
+            updateTelemetry();
+            applyStateToScene();
+            updateCameraFromState();
+          });
+        }
+
+        const backButton = document.getElementById('btn-back-main');
+        if (backButton) {
+          backButton.addEventListener('click', () => {
+            window.location.href = 'index.html';
+          });
+        }
+
+        const introBtn = document.getElementById('narrate-intro');
+        const lensBtn = document.getElementById('narrate-lensing');
+        const horizonBtn = document.getElementById('narrate-horizon');
+        introBtn?.addEventListener('click', () =>
+          playNarration(
+            'intro',
+            'Black holes are regions of spacetime where gravity is so strong that nothing, not even light, can escape. The boundary is called the Event Horizon.',
+          ),
+        );
+        lensBtn?.addEventListener('click', () =>
+          playNarration(
+            'lensing',
+            'Notice the halo of light. This is gravitational lensing. The gravity of the black hole bends light from the accretion disk behind it, making it appear above and below the shadow.',
+          ),
+        );
+        horizonBtn?.addEventListener('click', () =>
+          playNarration(
+            'horizon',
+            'The accretion disk spins at relativistic speeds. Due to the Doppler effect, the side moving towards you appears brighter and bluer, while the receding side is dimmer and redder.',
+          ),
+        );
+      }
+
+      function setupTabs() {
+        const buttons = document.querySelectorAll('.tab');
+        const panels = document.querySelectorAll('.tabpanel');
+        buttons.forEach((btn) => {
+          btn.addEventListener('click', () => {
+            buttons.forEach((b) => b.classList.remove('is-active'));
+            panels.forEach((panel) => panel.classList.remove('is-active'));
+            btn.classList.add('is-active');
+            const target = btn.dataset.tabTarget;
+            if (target) {
+              const panel = document.getElementById(`tab-${target}`);
+              if (panel) panel.classList.add('is-active');
+            }
+          });
+        });
+      }
+
+      function setupConsole() {
+        if (!calcConsole || !formulaInput || !consoleToggle) return;
+        consoleToggle.addEventListener('click', () => {
+          consoleLive = !consoleLive;
+          consoleToggle.classList.toggle('active', consoleLive);
+          consoleToggle.textContent = consoleLive ? 'LIVE' : 'PAUSE';
+        });
+
+        if (consoleFullscreen) {
+          consoleFullscreen.addEventListener('click', () => {
+            const active = calcConsole.classList.toggle('fullscreen');
+            consoleFullscreen.textContent = active ? '⤺' : '⤢';
+            if (active) {
+              calcConsole.style.left = '20px';
+              calcConsole.style.top = '20px';
+              calcConsole.style.right = 'auto';
+              calcConsole.style.bottom = 'auto';
+            } else {
+              calcConsole.style.left = '';
+              calcConsole.style.top = '';
+              calcConsole.style.cursor = '';
+            }
+          });
+
+          let consoleDragging = false;
+          let consoleOffset = { x: 0, y: 0 };
+          calcConsole.addEventListener('pointerdown', (event) => {
+            if (!calcConsole.classList.contains('fullscreen')) return;
+            const header = event.target.closest('.console-header');
+            const actions = event.target.closest('.header-actions');
+            if (!header || actions) return;
+            consoleDragging = true;
+            const rect = calcConsole.getBoundingClientRect();
+            consoleOffset.x = event.clientX - rect.left;
+            consoleOffset.y = event.clientY - rect.top;
+            calcConsole.setPointerCapture(event.pointerId);
+            calcConsole.style.cursor = 'grabbing';
+          });
+          calcConsole.addEventListener('pointermove', (event) => {
+            if (!consoleDragging) return;
+            calcConsole.style.left = `${event.clientX - consoleOffset.x}px`;
+            calcConsole.style.top = `${event.clientY - consoleOffset.y}px`;
+          });
+          calcConsole.addEventListener('pointerup', (event) => {
+            if (!consoleDragging) return;
+            consoleDragging = false;
+            calcConsole.releasePointerCapture(event.pointerId);
+            calcConsole.style.cursor = 'grab';
+          });
+          calcConsole.addEventListener('pointerleave', (event) => {
+            if (!consoleDragging) return;
+            consoleDragging = false;
+            calcConsole.releasePointerCapture(event.pointerId);
+            calcConsole.style.cursor = 'grab';
+          });
+        }
+
+        let tooltipDragging = false;
+        let tooltipMoved = false;
+        let dragOffset = { x: 0, y: 0 };
+        consoleInfo?.addEventListener('click', () => {
+          consoleTooltip.classList.toggle('visible');
+          if (consoleTooltip.classList.contains('visible')) {
+            const rect = consoleInfo.getBoundingClientRect();
+            consoleTooltip.style.left = `${rect.right + 10}px`;
+            consoleTooltip.style.top = `${rect.top}px`;
+          }
+        });
+        consoleTooltip?.addEventListener('pointerdown', (event) => {
+          tooltipDragging = true;
+          tooltipMoved = false;
+          const rect = consoleTooltip.getBoundingClientRect();
+          dragOffset.x = event.clientX - rect.left;
+          dragOffset.y = event.clientY - rect.top;
+          consoleTooltip.style.cursor = 'grabbing';
+          consoleTooltip.setPointerCapture(event.pointerId);
+        });
+        consoleTooltip?.addEventListener('pointermove', (event) => {
+          if (!tooltipDragging) return;
+          tooltipMoved = true;
+          consoleTooltip.style.left = `${event.clientX - dragOffset.x}px`;
+          consoleTooltip.style.top = `${event.clientY - dragOffset.y}px`;
+        });
+        consoleTooltip?.addEventListener('pointerup', (event) => {
+          if (!tooltipDragging) return;
+          tooltipDragging = false;
+          consoleTooltip.releasePointerCapture(event.pointerId);
+          consoleTooltip.style.cursor = 'grab';
+        });
+        consoleTooltip?.addEventListener('click', () => {
+          if (!tooltipMoved) {
+            consoleTooltip.classList.remove('visible');
+          }
+        });
+
+        applyFormulaBtn?.addEventListener('click', () => evaluateFormulas(true));
+        clearFormulaBtn?.addEventListener('click', () => {
+          formulaInput.value = 'doppler = sqrt((1+beta)/(1-beta))\ninclination = 45\nzoom = 60';
+          evaluateFormulas(false);
+        });
+        formulaInput?.addEventListener('input', () => updateSuggestionList());
+        formulaInput?.addEventListener('keydown', (event) => {
+          if (event.key === 'Tab' && suggestionList.classList.contains('visible')) {
+            event.preventDefault();
+            const first = suggestionList.querySelector('.suggestion-item');
+            if (first) insertSuggestion(first.dataset.insert);
+          }
+        });
+        formulaInput?.addEventListener('blur', () => {
+          setTimeout(() => suggestionList.classList.remove('visible'), 150);
+        });
+      }
+
+      function updateSuggestionList() {
+        if (!suggestionList || !formulaInput) return;
+        const caret = formulaInput.selectionStart;
+        const text = formulaInput.value.slice(0, caret);
+        const token = text.split(/[\s=()+\-*/]+/).pop();
+        if (!token || token.length < 2) {
+          suggestionList.classList.remove('visible');
+          return;
+        }
+        const matcher = token.toLowerCase();
+        const matches = formulaSuggestions.filter((item) => item.label.toLowerCase().includes(matcher)).slice(0, 5);
+        if (matches.length === 0) {
+          suggestionList.classList.remove('visible');
+          return;
+        }
+        suggestionList.innerHTML = '';
+        matches.forEach((entry) => {
+          const div = document.createElement('div');
+          div.className = 'suggestion-item';
+          div.textContent = entry.label;
+          div.dataset.insert = entry.insert;
+          div.addEventListener('click', () => insertSuggestion(entry.insert));
+          suggestionList.appendChild(div);
+        });
+        suggestionList.classList.add('visible');
+      }
+
+      function insertSuggestion(text) {
+        if (!formulaInput) return;
+        const caret = formulaInput.selectionStart;
+        const before = formulaInput.value.slice(0, caret);
+        const after = formulaInput.value.slice(formulaInput.selectionEnd);
+        const token = before.split(/[\s=()+\-*/]+/).pop() || '';
+        const newBefore = before.slice(0, before.length - token.length) + text;
+        formulaInput.value = newBefore + after;
+        const newCaret = newBefore.length;
+        formulaInput.setSelectionRange(newCaret, newCaret);
+        suggestionList.classList.remove('visible');
+      }
+
+      function evaluateFormulas(applyUpdates = false) {
+        if (!formulaInput) return;
+        const text = formulaInput.value.trim();
+        if (!text) {
+          formulaOutput.innerText = '輸入公式，如 doppler = sqrt((1+beta)/(1-beta))';
+          return;
+        }
+        const massSolar = uiState.mass * 1e8;
+        const rg = gravitationalRadiusMeters(massSolar);
+        const isco = iscoRadiusRg(uiState.spin);
+        const photon = photonRadiusRg(uiState.spin);
+        const redshift = gravitationalRedshiftRg(photon + 0.05, uiState.spin);
+        const beta = orbitalBeta(isco, uiState.spin);
+        const context = {
+          r: photon,
+          a: uiState.spin,
+          beta,
+          incl: toRadians(uiState.inclination),
+          Rg: rg,
+          ISCO: isco,
+          photon,
+          z: redshift,
+        };
+        const assignments = {};
+        const outputs = [];
+        const lines = text.split(/\n+/);
+        for (const raw of lines) {
+          const line = raw.trim();
+          if (!line) continue;
+          const parts = line.split('=');
+          if (parts.length !== 2) {
+            outputs.push(`無法解析：${line}`);
+            continue;
+          }
+          const label = parts[0].trim().toLowerCase();
+          const expr = parts[1].trim();
+          try {
+            const fn = new Function('r', 'a', 'beta', 'incl', 'Rg', 'ISCO', 'photon', 'z', `return ${expr};`);
+            const value = fn(context.r, context.a, context.beta, context.incl, context.Rg, context.ISCO, context.photon, context.z);
+            outputs.push(`${label} = ${Number(value).toFixed(6)}`);
+            assignments[label] = Number(value);
+          } catch (error) {
+            outputs.push(`${label}: 錯誤 (${error.message})`);
+          }
+        }
+        formulaOutput.innerText = outputs.join('\n');
+        if (applyUpdates) {
+          applyFormulaAssignments(assignments);
+        }
+      }
+
+      function applyFormulaAssignments(assignments) {
+        const setIfDefined = (key, setter) => {
+          if (assignments[key] !== undefined && !Number.isNaN(assignments[key])) {
+            setter(assignments[key]);
+          }
+        };
+        setIfDefined('mass', (value) => {
+          uiState.mass = THREE.MathUtils.clamp(value, 1, 15);
+          sliders.mass.value = uiState.mass;
+          updateDisplay('mass', uiState.mass, 2);
+        });
+        setIfDefined('spin', (value) => {
+          uiState.spin = THREE.MathUtils.clamp(value, 0, 0.998);
+          sliders.spin.value = uiState.spin;
+          updateDisplay('spin', uiState.spin, 3);
+        });
+        setIfDefined('inclination', (value) => {
+          uiState.inclination = THREE.MathUtils.clamp(value, 0, 90);
+          sliders.inclination.value = uiState.inclination;
+          updateDisplay('inclination', uiState.inclination, 1);
+        });
+        setIfDefined('doppler', (value) => {
+          uiState.doppler = THREE.MathUtils.clamp(value, 0.5, 3);
+          sliders.doppler.value = uiState.doppler;
+          updateDisplay('doppler', uiState.doppler, 2);
+        });
+        setIfDefined('exposure', (value) => {
+          uiState.exposure = THREE.MathUtils.clamp(value, 0.6, 1.6);
+          sliders.exposure.value = uiState.exposure;
+          updateDisplay('exposure', uiState.exposure, 2);
+        });
+        setIfDefined('zoom', (value) => {
+          uiState.zoom = THREE.MathUtils.clamp(value, 10, 200);
+          sliders.zoom.value = uiState.zoom;
+          updateDisplay('zoom', uiState.zoom, 0);
+        });
+        setIfDefined('azimuth', (value) => {
+          uiState.azimuth = wrap360(value);
+          sliders.azimuth.value = uiState.azimuth;
+          updateDisplay('azimuth', uiState.azimuth, 1);
+        });
+        setIfDefined('elevation', (value) => {
+          uiState.elevation = wrap360(value);
+          sliders.elevation.value = uiState.elevation;
+          updateDisplay('elevation', uiState.elevation, 1);
+        });
+
+        updateTelemetry();
+        applyStateToScene();
+        updateCameraFromState();
+      }
+
+      function updateTelemetry() {
+        const massSolar = uiState.mass * 1e8;
+        const massKg = massSolar * SOLAR_MASS;
+        const rg = gravitationalRadiusMeters(massSolar);
+        const isco = iscoRadiusRg(uiState.spin);
+        const photon = photonRadiusRg(uiState.spin);
+        const redshift = gravitationalRedshiftRg(photon + 0.05, uiState.spin);
+        const beta = orbitalBeta(isco, uiState.spin);
+        const timeDilation = 1 + redshift;
+        const dopplerFactor = Math.sqrt((1 + beta) / (1 - beta));
+        const periodSeconds = 2 * Math.PI * (Math.pow(isco, 1.5) + uiState.spin) * (rg / C);
+        const flux = uiState.exposure * uiState.doppler * 1e-4;
+
+        telemetryRefs.rg && (telemetryRefs.rg.textContent = `${rg.toExponential(3)} m`);
+        telemetryRefs.isco && (telemetryRefs.isco.textContent = `${isco.toFixed(3)} Rg`);
+        telemetryRefs.photon && (telemetryRefs.photon.textContent = `${photon.toFixed(3)} Rg`);
+        telemetryRefs.redshift && (telemetryRefs.redshift.textContent = redshift.toFixed(4));
+        telemetryRefs.beta && (telemetryRefs.beta.textContent = beta.toFixed(4));
+        telemetryRefs.time && (telemetryRefs.time.textContent = `${timeDilation.toFixed(3)}×`);
+        telemetryRefs.doppler && (telemetryRefs.doppler.textContent = dopplerFactor.toFixed(3));
+        telemetryRefs.period && (telemetryRefs.period.textContent = `${(periodSeconds / 60).toFixed(2)} min`);
+        telemetryRefs.flux && (telemetryRefs.flux.textContent = `${flux.toExponential(2)} arb`);
+
+        if (formulaPanel) {
+          formulaPanel.innerText = `
+R_g = 2GM/c² = 2 × ${G} × ${massKg.toExponential(3)} / ${C}² = ${rg.toExponential(4)} m
+r_ISCO(a=${uiState.spin.toFixed(3)}) = ${isco.toFixed(4)} R_g
+r_ph = 2[1+cos(2/3·acos(-|a|))] = ${photon.toFixed(4)} R_g
+z = 1/√(1 - 2/r + a²/r²) - 1 → ${redshift.toFixed(4)}
+β = r·ω/c, ω = 1/(r^{3/2}+a) → β = ${beta.toFixed(4)}
+          `;
+        }
+
+        if (consoleLive) {
+          evaluateFormulas(false);
+        }
+      }
+
+      function applyStateToScene() {
+        if (renderer) {
+          renderer.toneMappingExposure = uiState.exposure;
+        }
+        const massScale = THREE.MathUtils.mapLinear(uiState.mass, 1, 15, 0.8, 1.35);
+        if (blackHoleSphere) blackHoleSphere.scale.setScalar(massScale);
+        if (accretionDiskParticles) {
+          accretionDiskParticles.scale.setScalar(massScale);
+          accretionDiskParticles.material.uniforms.rotation_speed.value = 0.2 + uiState.spin * 0.4;
+          accretionDiskParticles.material.uniforms.noise_strength.value = 0.2 + uiState.doppler * 0.1;
+        }
+        if (warpedAccretionDiskGeometry) {
+          warpedAccretionDiskGeometry.scale.setScalar(massScale);
+          warpedAccretionDiskGeometry.material.uniforms.rotation_speed.value = 0.18 + uiState.spin * 0.35;
+          warpedAccretionDiskGeometry.material.uniforms.noise_strength.value = 0.18 + uiState.doppler * 0.08;
+        }
+        controls.autoRotateSpeed = 0.05 + uiState.spin * 0.3;
+      }
+
+      function updateCameraFromState() {
+        if (!camera || !controls) return;
+        const distance = THREE.MathUtils.mapLinear(uiState.zoom, 10, 200, 8, 60);
+        const polar = toRadians(90 - uiState.inclination);
+        const azimuth = toRadians(uiState.azimuth);
+        const x = distance * Math.sin(polar) * Math.cos(azimuth);
+        const y = distance * Math.cos(polar);
+        const z = distance * Math.sin(polar) * Math.sin(azimuth);
+        camera.position.set(x, y, z);
+        controls.target.set(0, 0, 0);
+        controls.update();
+      }
