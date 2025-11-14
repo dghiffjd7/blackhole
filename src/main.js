@@ -17,6 +17,8 @@ const defaultState = {
   cameraZoom: 0.53,
 };
 
+const MASS_SLIDER_SCALE = 1_000_000; // slider units represent millions of solar masses
+
 const toRadians = (deg) => (deg * Math.PI) / 180;
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const wrap360 = (deg) => ((deg % 360) + 360) % 360;
@@ -84,6 +86,429 @@ class KerrRenderer {
     this._initProgram();
     this._resize();
     window.addEventListener("resize", () => this._resize());
+  }
+
+  _initFormulaConsole() {
+    if (!this.calcConsole || !this.formulaInput) return;
+    this.consoleToggle?.addEventListener("click", () => {
+      this.consoleLive = !this.consoleLive;
+      this.consoleToggle.classList.toggle("is-active", this.consoleLive);
+      this.consoleToggle.textContent = this.consoleLive ? "LIVE" : "PAUSE";
+    });
+    this.consoleFullscreen?.addEventListener("click", () => {
+      const active = this.calcConsole.classList.toggle("fullscreen");
+      this.consoleFullscreen.textContent = active ? "⤺" : "⤢";
+      if (!active) {
+        this.calcConsole.style.left = "";
+        this.calcConsole.style.top = "";
+        this.calcConsole.style.cursor = "";
+      }
+    });
+    if (this.calcConsole) {
+      let dragging = false;
+      let startOffset = { x: 0, y: 0 };
+      this.calcConsole.addEventListener("pointerdown", (event) => {
+        if (!this.calcConsole.classList.contains("fullscreen")) return;
+        const header = event.target.closest(".console-header");
+        const actionArea = event.target.closest(".console-header-actions");
+        if (!header || actionArea) return;
+        dragging = true;
+        const rect = this.calcConsole.getBoundingClientRect();
+        startOffset = {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+        };
+        this.calcConsole.setPointerCapture(event.pointerId);
+        this.calcConsole.style.cursor = "grabbing";
+      });
+      const endDrag = (event) => {
+        if (!dragging) return;
+        dragging = false;
+        this.calcConsole.releasePointerCapture(event.pointerId);
+        this.calcConsole.style.cursor = "grab";
+      };
+      this.calcConsole.addEventListener("pointermove", (event) => {
+        if (!dragging) return;
+        this.calcConsole.style.left = `${event.clientX - startOffset.x}px`;
+        this.calcConsole.style.top = `${event.clientY - startOffset.y}px`;
+      });
+      this.calcConsole.addEventListener("pointerup", endDrag);
+      this.calcConsole.addEventListener("pointerleave", endDrag);
+    }
+    this.consoleInfo?.addEventListener("click", () => {
+      if (!this.consoleTooltip) return;
+      this.consoleTooltip.classList.toggle("visible");
+    });
+    if (this.consoleTooltip) {
+      let dragging = false;
+      let moved = false;
+      let offset = { x: 0, y: 0 };
+      this.consoleTooltip.addEventListener("pointerdown", (event) => {
+        dragging = true;
+        moved = false;
+        const rect = this.consoleTooltip.getBoundingClientRect();
+        offset = {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+        };
+        this.consoleTooltip.setPointerCapture(event.pointerId);
+        this.consoleTooltip.style.cursor = "grabbing";
+      });
+      const finish = (event) => {
+        if (!dragging) return;
+        dragging = false;
+        this.consoleTooltip.releasePointerCapture(event.pointerId);
+        this.consoleTooltip.style.cursor = "grab";
+      };
+      this.consoleTooltip.addEventListener("pointermove", (event) => {
+        if (!dragging) return;
+        moved = true;
+        this.consoleTooltip.style.left = `${event.clientX - offset.x}px`;
+        this.consoleTooltip.style.top = `${event.clientY - offset.y}px`;
+      });
+      this.consoleTooltip.addEventListener("pointerup", finish);
+      this.consoleTooltip.addEventListener("pointerleave", finish);
+      this.consoleTooltip.addEventListener("click", () => {
+        if (!moved) {
+          this.consoleTooltip.classList.remove("visible");
+        }
+      });
+    }
+    this.applyFormulaBtn?.addEventListener("click", () => this._evaluateFormulas(true));
+    this.clearFormulaBtn?.addEventListener("click", () => {
+      if (!this.formulaInput) return;
+      this.formulaInput.value =
+        "doppler = sqrt((1+beta)/(1-beta))\ninclination = 50\nobserver = 45";
+      this._evaluateFormulas(false);
+    });
+    this.formulaInput.addEventListener("input", () => this._updateSuggestionList());
+    this.formulaInput.addEventListener("keydown", (event) => {
+      if (event.key === "Tab" && this.suggestionList?.classList.contains("visible")) {
+        event.preventDefault();
+        const first = this.suggestionList.querySelector(".suggestion-item");
+        if (first) {
+          this._insertSuggestion(first.dataset.insert);
+        }
+      }
+    });
+    this.formulaInput.addEventListener("blur", () => {
+      window.setTimeout(() => this.suggestionList?.classList.remove("visible"), 120);
+    });
+  }
+
+  _evaluateFormulas(applyUpdates = false) {
+    if (!this.formulaInput || !this.formulaOutput || !this.latestTelemetry) return;
+    const content = this.formulaInput.value.trim();
+    if (!content) {
+      this.formulaOutput.textContent = "輸入公式，如 doppler = sqrt((1+beta)/(1-beta))";
+      return;
+    }
+    const { spin, gravRadius, isco, photon, redshift, beta } = this.latestTelemetry;
+    const context = {
+      r: photon,
+      a: spin,
+      beta,
+      incl: toRadians(this.state.inclinationDeg),
+      Rg: gravRadius,
+      ISCO: isco,
+      photon,
+      z: redshift,
+      observer: this.state.observerRg,
+    };
+    const assignments = {};
+    const outputs = [];
+    const lines = content.split(/\n+/);
+    for (const row of lines) {
+      const line = row.trim();
+      if (!line) continue;
+      const [labelRaw, exprRaw] = line.split("=").map((part) => part?.trim());
+      if (!labelRaw || !exprRaw) {
+        outputs.push(`無法解析：${line}`);
+        continue;
+      }
+      try {
+        const fn = new Function(
+          "r",
+          "a",
+          "beta",
+          "incl",
+          "Rg",
+          "ISCO",
+          "photon",
+          "z",
+          "observer",
+          `return ${exprRaw};`
+        );
+        const value = fn(
+          context.r,
+          context.a,
+          context.beta,
+          context.incl,
+          context.Rg,
+          context.ISCO,
+          context.photon,
+          context.z,
+          context.observer
+        );
+        outputs.push(`${labelRaw} = ${Number(value).toFixed(6)}`);
+        assignments[labelRaw.toLowerCase()] = Number(value);
+      } catch (error) {
+        outputs.push(`${labelRaw}: 錯誤 (${error.message})`);
+      }
+    }
+    this.formulaOutput.textContent = outputs.join("\n");
+    if (applyUpdates) {
+      this._applyFormulaAssignments(assignments);
+    }
+  }
+
+  _updateSuggestionList() {
+    if (!this.formulaInput || !this.suggestionList) return;
+    const caret = this.formulaInput.selectionStart;
+    const text = this.formulaInput.value.slice(0, caret);
+    const token = text.split(/[\s=()+*\/-]+/).pop();
+    if (!token || token.length < 2) {
+      this.suggestionList.classList.remove("visible");
+      return;
+    }
+    const matcher = token.toLowerCase();
+    const matches = this.formulaSuggestions
+      .filter((item) => item.label.toLowerCase().includes(matcher))
+      .slice(0, 5);
+    if (!matches.length) {
+      this.suggestionList.classList.remove("visible");
+      return;
+    }
+    this.suggestionList.innerHTML = "";
+    matches.forEach((item) => {
+      const div = document.createElement("div");
+      div.className = "suggestion-item";
+      div.textContent = item.label;
+      div.dataset.insert = item.insert;
+      div.addEventListener("click", () => this._insertSuggestion(item.insert));
+      this.suggestionList.appendChild(div);
+    });
+    this.suggestionList.classList.add("visible");
+  }
+
+  _insertSuggestion(insertText) {
+    if (!this.formulaInput) return;
+    const start = this.formulaInput.selectionStart;
+    const end = this.formulaInput.selectionEnd;
+    const before = this.formulaInput.value.slice(0, start);
+    const after = this.formulaInput.value.slice(end);
+    const token = before.split(/[\s=()+*\/-]+/).pop() || "";
+    const newBefore = before.slice(0, before.length - token.length) + insertText;
+    this.formulaInput.value = newBefore + after;
+    const newCaret = newBefore.length;
+    this.formulaInput.setSelectionRange(newCaret, newCaret);
+    this._updateSuggestionList();
+    this.suggestionList?.classList.remove("visible");
+  }
+
+  _applyFormulaAssignments(assignments) {
+    const setIfDefined = (key, fn) => {
+      if (assignments[key] === undefined || Number.isNaN(assignments[key])) return;
+      fn(assignments[key]);
+    };
+    setIfDefined("mass", (val) => {
+      this.state.massSolar = clamp(val, 1e6, 5e10);
+      if (this.controls.mass) {
+        this.controls.mass.value = (this.state.massSolar / MASS_SLIDER_SCALE).toFixed(0);
+      }
+    });
+    setIfDefined("spin", (val) => {
+      this.state.spin = clamp(val, 0, 0.998);
+    });
+    setIfDefined("inclination", (val) => {
+      this.state.inclinationDeg = clamp(val, 0, 90);
+    });
+    setIfDefined("observer", (val) => {
+      this.state.observerRg = clamp(val, 5, 400);
+    });
+    setIfDefined("distance", (val) => {
+      this.state.observerRg = clamp(val, 5, 400);
+    });
+    setIfDefined("diskinner", (val) => {
+      this.state.diskInnerRg = clamp(val, 0.5, 10);
+    });
+    setIfDefined("diskouter", (val) => {
+      this.state.diskOuterRg = clamp(val, this.state.diskInnerRg + 0.2, 60);
+    });
+    setIfDefined("doppler", (val) => {
+      this.state.dopplerBoost = clamp(val, 0.5, 3);
+    });
+    setIfDefined("exposure", (val) => {
+      this.state.exposure = clamp(val, 0.6, 1.6);
+    });
+    setIfDefined("flow", (val) => {
+      this.state.flowRate = clamp(val, 0.5, 3);
+    });
+    setIfDefined("zoom", (val) => {
+      this.state.cameraZoom = clamp(val, 0.5, 2.2);
+    });
+    setIfDefined("camazimuth", (val) => {
+      this.state.cameraAzimuthDeg = wrap360(val);
+    });
+    setIfDefined("camelevation", (val) => {
+      this.state.cameraElevationDeg = wrap360(val);
+    });
+    this._syncInputsFromState();
+    this._updateTelemetry();
+  }
+
+  _bindIntroOverlay() {
+    if (!this.overlay || !this.initButton) return;
+    this.initButton.addEventListener("click", () => {
+      this.overlay.classList.add("is-hidden");
+      this.overlay.setAttribute("aria-hidden", "true");
+      this._ensureAudioContext();
+      this._playNarration(
+        "initial",
+        "觀測鏈已啟動，載入 Kerr 幾何與語音敘述。調整控制台以更新吸積盤狀態。"
+      );
+    });
+  }
+
+  _createNarrationClips() {
+    const make = (path) => {
+      const clip = new Audio(path);
+      clip.preload = "auto";
+      clip.crossOrigin = "anonymous";
+      clip.volume = 0.85;
+      return clip;
+    };
+    return {
+      initial: make("audio/Initial Narration.mp3"),
+      intro: make("audio/narrate-intro.mp3"),
+      lensing: make("audio/narrate-lensing.mp3"),
+      horizon: make("audio/narrate-horizon.mp3"),
+    };
+  }
+
+  _bindAudioControls() {
+    this.ambienceToggle?.classList.toggle("is-active", this.isAmbienceOn);
+    if (this.audioButtons.intro) {
+      this.audioButtons.intro.addEventListener("click", () => {
+        this._ensureAudioContext();
+        this._playNarration(
+          "intro",
+          "黑洞是時空彎曲到連光也無法逃逸的區域，事件視界定義了無人返程的邊界。"
+        );
+      });
+    }
+    if (this.audioButtons.lensing) {
+      this.audioButtons.lensing.addEventListener("click", () => {
+        this._ensureAudioContext();
+        this._playNarration(
+          "lensing",
+          "注意光暈與背面鏡像，這是重力透鏡讓盤面後方的光線在我們視線上彎折。"
+        );
+      });
+    }
+    if (this.audioButtons.horizon) {
+      this.audioButtons.horizon.addEventListener("click", () => {
+        this._ensureAudioContext();
+        this._playNarration(
+          "horizon",
+          "吸積盤以相對論速度旋轉，靠近我們的一側受 Doppler 加亮並偏藍，遠離的一側則偏紅。"
+        );
+      });
+    }
+    if (this.ambienceToggle) {
+      this.ambienceToggle.addEventListener("click", () => {
+        this._ensureAudioContext();
+        this._toggleAmbience();
+      });
+    }
+  }
+
+  _ensureAudioContext() {
+    if (this.audioCtx) return;
+    const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextCtor) return;
+    this.audioCtx = new AudioContextCtor();
+    this._startDrone();
+  }
+
+  _startDrone() {
+    if (!this.audioCtx || this.droneGain) return;
+    const osc1 = this.audioCtx.createOscillator();
+    const osc2 = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+    const filter = this.audioCtx.createBiquadFilter();
+
+    osc1.type = "sine";
+    osc1.frequency.value = 50;
+
+    osc2.type = "sawtooth";
+    osc2.frequency.value = 0.2;
+    const modGain = this.audioCtx.createGain();
+    modGain.gain.value = 20;
+    osc2.connect(modGain);
+    modGain.connect(osc1.frequency);
+
+    filter.type = "lowpass";
+    filter.frequency.value = 200;
+
+    osc1.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.audioCtx.destination);
+    gain.gain.value = 0.3;
+
+    osc1.start();
+    osc2.start();
+    this.droneGain = gain;
+  }
+
+  _toggleAmbience() {
+    this.isAmbienceOn = !this.isAmbienceOn;
+    if (this.droneGain && this.audioCtx) {
+      this.droneGain.gain.setTargetAtTime(
+        this.isAmbienceOn ? 0.3 : 0,
+        this.audioCtx.currentTime,
+        0.5
+      );
+    }
+    this.ambienceToggle?.classList.toggle("is-active", this.isAmbienceOn);
+  }
+
+  _showSubtitle(text) {
+    if (!this.subtitleText) return;
+    this.subtitleText.textContent = text;
+    this.subtitleText.style.opacity = "1";
+    clearTimeout(this.subtitleTimer);
+    this.subtitleTimer = window.setTimeout(() => {
+      this.subtitleText.style.opacity = "0";
+    }, 6000);
+  }
+
+  _playNarration(id, subtitle) {
+    this._showSubtitle(subtitle);
+    const clip = this.narrationClips?.[id];
+    if (!clip) return;
+    Object.values(this.narrationClips).forEach((audio) => {
+      audio.pause();
+      audio.currentTime = 0;
+    });
+    clip.play().catch(() => {});
+  }
+
+  _updateFormulaPanel(payload) {
+    if (!this.formulaPanel || !payload) return;
+    const { massSolar, gravRadius, spin, isco, photon, redshift, beta } = payload;
+    const massKg = massSolar * SOLAR_MASS;
+    this.formulaPanel.textContent = `R_g = 2GM / c²
+  = 2 × ${G} × ${massKg.toExponential(3)} / ${C}²
+  = ${gravRadius.toExponential(4)} m
+
+r_ISCO(a=${spin.toFixed(3)}) = ${isco.toFixed(4)} R_g
+r_ph = 2[1 + cos(2/3·acos(-|a|))] = ${photon.toFixed(4)} R_g
+
+z = 1/√(1 - 2/r + a²/r²) - 1
+  r = r_ph + 0.05 → z = ${redshift.toFixed(4)}
+
+β = r·ω/c,  ω = 1/(r^{3/2} + a) → β = ${beta.toFixed(4)}`;
   }
 
   _initProgram() {
@@ -392,6 +817,7 @@ class BlackHoleCard {
       calculations: document.getElementById("tab-calculations"),
     };
     this.controlValues = {
+      mass: document.querySelector('[data-control-value="mass"]'),
       spin: document.querySelector('[data-control-value="spin"]'),
       inclination: document.querySelector('[data-control-value="inclination"]'),
       distance: document.querySelector('[data-control-value="distance"]'),
@@ -413,6 +839,7 @@ class BlackHoleCard {
       fps: document.getElementById("metric-fps"),
     };
     this.controls = {
+      mass: document.getElementById("control-mass"),
       spin: document.getElementById("control-spin"),
       inclination: document.getElementById("control-inclination"),
       distance: document.getElementById("control-distance"),
@@ -425,6 +852,26 @@ class BlackHoleCard {
       cameraElevation: document.getElementById("control-camera-elevation"),
       cameraZoom: document.getElementById("control-camera-zoom"),
     };
+    this.formulaPanel = document.getElementById("formula-panel");
+    this.formulaInput = document.getElementById("formula-input");
+    this.formulaOutput = document.getElementById("formula-output");
+    this.suggestionList = document.getElementById("suggestion-list");
+    this.calcConsole = document.getElementById("calc-console");
+    this.consoleToggle = document.getElementById("console-toggle");
+    this.consoleFullscreen = document.getElementById("console-fullscreen");
+    this.consoleInfo = document.getElementById("console-info");
+    this.consoleTooltip = document.getElementById("console-tooltip");
+    this.applyFormulaBtn = document.getElementById("apply-formula");
+    this.clearFormulaBtn = document.getElementById("clear-formula");
+    this.subtitleText = document.getElementById("subtitle-text");
+    this.overlay = document.getElementById("start-overlay");
+    this.initButton = document.getElementById("init-btn");
+    this.audioButtons = {
+      intro: document.getElementById("narrate-intro"),
+      lensing: document.getElementById("narrate-lensing"),
+      horizon: document.getElementById("narrate-horizon"),
+    };
+    this.ambienceToggle = document.getElementById("toggle-ambience");
 
     this.state = { ...defaultState };
     this.renderer = new KerrRenderer(this.canvas);
@@ -433,6 +880,21 @@ class BlackHoleCard {
     this.accumTime = 0;
     this.statusPill.textContent = "Shader 近似積分 (待 WASM)";
     this.lastSolverTick = 0;
+    this.consoleLive = true;
+    this.latestTelemetry = null;
+    this.audioCtx = null;
+    this.droneGain = null;
+    this.isAmbienceOn = true;
+    this.narrationClips = this._createNarrationClips();
+    this.formulaSuggestions = [
+      { label: "z = 1/sqrt(1 - 2/r + a^2/r^2) - 1", insert: "z = 1/sqrt(1 - 2/r + a^2/r^2) - 1" },
+      { label: "doppler = sqrt((1+beta)/(1-beta))", insert: "doppler = sqrt((1+beta)/(1-beta))" },
+      { label: "inclination = atan(beta) * 180 / PI", insert: "inclination = atan(beta) * 180 / PI" },
+      { label: "observer = 45", insert: "observer = 45" },
+      { label: "spin = min(0.998, spin + 0.01)", insert: "spin = min(0.998, spin + 0.01)" },
+      { label: "mass = 8e8", insert: "mass = 8e8" },
+    ];
+    this.subtitleTimer = null;
 
     this._wireControls();
     this._bindReset();
@@ -442,6 +904,10 @@ class BlackHoleCard {
     this._syncCameraControls();
     this._updateTelemetry();
     this._pollValidation();
+    this._bindIntroOverlay();
+    this._bindAudioControls();
+    this._initFormulaConsole();
+
     this.validationTimer = window.setInterval(
       () => this._pollValidation(),
       10000
@@ -450,6 +916,13 @@ class BlackHoleCard {
   }
 
   _wireControls() {
+    if (this.controls.mass) {
+      this.controls.mass.addEventListener("input", (event) => {
+        const millions = parseFloat(event.target.value);
+        this.state.massSolar = millions * MASS_SLIDER_SCALE;
+        this._updateTelemetry();
+      });
+    }
     this.controls.spin.addEventListener("input", (event) => {
       const spin = parseFloat(event.target.value);
       this.state.spin = spin;
@@ -543,6 +1016,7 @@ class BlackHoleCard {
     const assign = (control, value) => {
       if (control) control.value = value;
     };
+    assign(this.controls.mass, this.state.massSolar / MASS_SLIDER_SCALE);
     assign(this.controls.spin, this.state.spin);
     assign(this.controls.inclination, this.state.inclinationDeg);
     assign(this.controls.distance, this.state.observerRg);
@@ -568,6 +1042,7 @@ class BlackHoleCard {
 
   _updateControlDisplays() {
     const entries = [
+      ["mass", this.state.massSolar / MASS_SLIDER_SCALE, 1, (val) => `${Number(val).toFixed(1)} M☉`],
       ["spin", this.state.spin, 3],
       ["inclination", this.state.inclinationDeg, 1],
       ["distance", this.state.observerRg, 0],
@@ -580,10 +1055,14 @@ class BlackHoleCard {
       ["camElevation", wrap360(this.state.cameraElevationDeg), 1],
       ["camZoom", this.state.cameraZoom, 2],
     ];
-    entries.forEach(([key, value, digits]) => {
+    entries.forEach(([key, value, digits, formatter]) => {
       const target = this.controlValues[key];
       if (!target) return;
-      target.textContent = Number(value).toFixed(digits);
+      if (typeof formatter === "function") {
+        target.textContent = formatter(value);
+      } else {
+        target.textContent = Number(value).toFixed(digits);
+      }
     });
   }
 
@@ -684,6 +1163,7 @@ class BlackHoleCard {
       photon,
       redshift,
       beta,
+      observer: this.state.observerRg,
     });
 
     this.renderer.updateState({
@@ -704,7 +1184,7 @@ class BlackHoleCard {
 
   _renderCalculations(payload) {
     if (!this.calcReadout) return;
-    const { massSolar, spin, gravRadius, isco, photon, redshift, beta } = payload;
+    const { massSolar, spin, gravRadius, isco, photon, redshift, beta, observer } = payload;
     const massKg = massSolar * SOLAR_MASS;
     const fmt = (value, digits = 3) =>
       Number(value).toExponential(digits);
@@ -772,6 +1252,11 @@ class BlackHoleCard {
         </article>`
       )
       .join("");
+    this.latestTelemetry = { massSolar, spin, gravRadius, isco, photon, redshift, beta, observer };
+    this._updateFormulaPanel(this.latestTelemetry);
+    if (this.consoleLive) {
+      this._evaluateFormulas(false);
+    }
   }
 
   attachSolverBridge(bridge) {

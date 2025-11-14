@@ -199,6 +199,266 @@ body {
   background: rgba(3, 6, 16, 0.85);
 }
 
+.formula-panel {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 16px;
+  background: rgba(3, 6, 16, 0.85);
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  white-space: pre-line;
+}
+
+.calc-console {
+  margin-top: 18px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 16px;
+  background: rgba(4, 8, 20, 0.92);
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  position: relative;
+}
+
+.calc-console.fullscreen {
+  position: fixed;
+  top: 32px;
+  left: 32px;
+  width: calc(100vw - 64px);
+  height: calc(100vh - 64px);
+  z-index: 200;
+  overflow: auto;
+  cursor: grab;
+}
+
+.calc-console.fullscreen textarea {
+  min-height: calc(100vh - 280px);
+}
+
+.console-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.console-header h3 {
+  margin: 0;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+
+.console-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pill-button {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-primary);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.pill-button.is-active,
+.pill-button:hover {
+  border-color: var(--accent);
+  background: rgba(67, 198, 247, 0.12);
+}
+
+.info-button {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+#formula-input {
+  width: 100%;
+  min-height: 160px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(2, 4, 12, 0.9);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  padding: 12px;
+  resize: vertical;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+}
+
+.console-actions {
+  display: flex;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.console-actions button {
+  flex: 1;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  padding: 10px 0;
+  cursor: pointer;
+  letter-spacing: 0.1em;
+}
+
+#formula-output {
+  font-size: 0.8rem;
+  color: var(--accent);
+  min-height: 48px;
+  white-space: pre-line;
+}
+
+#suggestion-list {
+  display: none;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.9);
+  margin-top: 8px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+#suggestion-list.visible {
+  display: block;
+}
+
+.suggestion-item {
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.suggestion-item:hover {
+  background: rgba(67, 198, 247, 0.1);
+}
+
+.tooltip {
+  position: fixed;
+  top: 40px;
+  right: 40px;
+  width: 280px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(4, 8, 20, 0.95);
+  font-size: 0.8rem;
+  padding: 12px;
+  color: var(--text-primary);
+  display: none;
+  z-index: 250;
+}
+
+.tooltip.visible {
+  display: block;
+}
+
+.audio-console {
+  margin-top: 24px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 16px;
+  background: rgba(4, 8, 20, 0.75);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.audio-console h3 {
+  margin: 0;
+  letter-spacing: 0.2em;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.audio-console button {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-primary);
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.audio-console button.is-active,
+.audio-console button:hover {
+  border-color: var(--accent);
+  background: rgba(67, 198, 247, 0.08);
+}
+
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 5, 16, 0.94);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  transition: opacity 0.4s ease;
+}
+
+.intro-overlay.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.intro-panel {
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: rgba(4, 8, 20, 0.95);
+  padding: 32px;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.intro-panel h2 {
+  margin: 12px 0;
+  letter-spacing: 0.2em;
+}
+
+.intro-copy {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+#subtitle-box {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(640px, 90%);
+  text-align: center;
+  pointer-events: none;
+}
+
+#subtitle-text {
+  background: rgba(0, 0, 0, 0.6);
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
 .calc-card h3 {
   margin: 0 0 8px;
   font-size: 0.9rem;

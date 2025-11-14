@@ -2,14 +2,20 @@
 <html lang="zh-Hant">
   <head>
     <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
     <title>Interstellar Kerr 黑洞卡</title>
     <link rel="stylesheet" href="src/styles.css" />
   </head>
   <body>
+    <div id="start-overlay" class="intro-overlay" aria-hidden="false">
+      <div class="intro-panel">
+        <p class="eyebrow">GARGANTUA MISSION PROTOCOL</p>
+        <h2>啟動觀測鏈</h2>
+        <p class="intro-copy">啟動後將載入語音敘述、環境聲場與進階參數控制台。首次啟動需點擊授權音訊。</p>
+        <button id="init-btn" class="ghost-button">啟動實驗室</button>
+      </div>
+    </div>
+
     <main class="card">
       <header class="card__header">
         <div>
@@ -18,21 +24,17 @@
         </div>
         <div class="card__actions">
           <div class="status-pill" id="solver-status">WASM 模組未載入</div>
-          <button id="control-reset" class="ghost-button" type="button">
-            重置視角
-          </button>
+          <button id="control-reset" class="ghost-button" type="button">重置視角</button>
         </div>
       </header>
 
       <section class="card__visual">
-        <canvas
-          id="bh-canvas"
-          width="1280"
-          height="720"
-          aria-label="Kerr black hole ray-traced render"
-        >
+        <canvas id="bh-canvas" width="1280" height="720" aria-label="Kerr black hole ray-traced render">
           您的瀏覽器不支援 WebGL
         </canvas>
+        <div id="subtitle-box">
+          <div id="subtitle-text"></div>
+        </div>
         <ul class="telemetry">
           <li>
             <span class="label">質量</span>
@@ -79,208 +81,137 @@
           </button>
         </div>
 
-        <div
-          id="tab-controls"
-          class="tabpanel is-active"
-          role="tabpanel"
-          aria-labelledby="tab-button-controls"
-        >
+        <div id="tab-controls" class="tabpanel is-active" role="tabpanel" aria-labelledby="tab-button-controls">
           <section class="card__controls">
+            <fieldset>
+              <div class="control-label">
+                <label for="control-mass">質量 (百萬太陽質量)</label>
+                <span class="control-value" data-control-value="mass">650.0</span>
+              </div>
+              <input id="control-mass" type="range" min="10" max="2000" step="5" value="650" />
+            </fieldset>
             <fieldset>
               <div class="control-label">
                 <label for="control-spin">自旋 a</label>
                 <span class="control-value" data-control-value="spin">0.998</span>
               </div>
-              <input
-                id="control-spin"
-                type="range"
-                min="0.0"
-                max="0.998"
-                step="0.001"
-                value="0.998"
-              />
+              <input id="control-spin" type="range" min="0.0" max="0.998" step="0.001" value="0.998" />
             </fieldset>
             <fieldset>
               <div class="control-label">
                 <label for="control-inclination">視角傾角 (°)</label>
-                <span
-                  class="control-value"
-                  data-control-value="inclination"
-                  >60</span
-                >
+                <span class="control-value" data-control-value="inclination">60</span>
               </div>
-              <input
-                id="control-inclination"
-                type="range"
-                min="0"
-                max="90"
-                step="1"
-                value="60"
-              />
+              <input id="control-inclination" type="range" min="0" max="90" step="1" value="60" />
             </fieldset>
             <fieldset>
               <div class="control-label">
                 <label for="control-distance">觀測距離 (Rg)</label>
-                <span class="control-value" data-control-value="distance"
-                  >60</span
-                >
+                <span class="control-value" data-control-value="distance">60</span>
               </div>
-              <input
-                id="control-distance"
-                type="range"
-                min="10"
-                max="200"
-                step="1"
-                value="60"
-              />
+              <input id="control-distance" type="range" min="10" max="200" step="1" value="60" />
             </fieldset>
             <fieldset>
               <div class="control-label">
                 <label for="control-disk-inner">盤面內緣 (Rg)</label>
-                <span class="control-value" data-control-value="diskInner"
-                  >1.4</span
-                >
+                <span class="control-value" data-control-value="diskInner">1.4</span>
               </div>
-              <input
-                id="control-disk-inner"
-                type="range"
-                min="0.5"
-                max="5"
-                step="0.1"
-                value="1.4"
-              />
+              <input id="control-disk-inner" type="range" min="0.5" max="5" step="0.1" value="1.4" />
             </fieldset>
             <fieldset>
               <div class="control-label">
                 <label for="control-disk-outer">盤面外緣 (Rg)</label>
-                <span class="control-value" data-control-value="diskOuter"
-                  >12</span
-                >
+                <span class="control-value" data-control-value="diskOuter">12</span>
               </div>
-              <input
-                id="control-disk-outer"
-                type="range"
-                min="5"
-                max="40"
-                step="0.5"
-                value="12"
-              />
+              <input id="control-disk-outer" type="range" min="5" max="40" step="0.5" value="12" />
             </fieldset>
             <fieldset>
               <div class="control-label">
                 <label for="control-doppler">Doppler 助推</label>
-                <span class="control-value" data-control-value="doppler"
-                  >1.5</span
-                >
+                <span class="control-value" data-control-value="doppler">1.5</span>
               </div>
-              <input
-                id="control-doppler"
-                type="range"
-                min="0.5"
-                max="3"
-                step="0.05"
-                value="1.5"
-              />
+              <input id="control-doppler" type="range" min="0.5" max="3" step="0.05" value="1.5" />
             </fieldset>
             <fieldset>
               <div class="control-label">
                 <label for="control-exposure">曝光 / 色溫</label>
-                <span class="control-value" data-control-value="exposure"
-                  >1.1</span
-                >
+                <span class="control-value" data-control-value="exposure">1.1</span>
               </div>
-              <input
-                id="control-exposure"
-                type="range"
-                min="0.6"
-                max="1.6"
-                step="0.02"
-                value="1.1"
-              />
+              <input id="control-exposure" type="range" min="0.6" max="1.6" step="0.02" value="1.1" />
             </fieldset>
             <fieldset>
               <div class="control-label">
                 <label for="control-flow">盤面流速</label>
                 <span class="control-value" data-control-value="flow">1.2</span>
               </div>
-              <input
-                id="control-flow"
-                type="range"
-                min="0.5"
-                max="2.5"
-                step="0.05"
-                value="1.2"
-              />
+              <input id="control-flow" type="range" min="0.5" max="2.5" step="0.05" value="1.2" />
             </fieldset>
             <fieldset>
               <div class="control-label">
                 <label for="control-camera-azimuth">視角方位 (°)</label>
-                <span class="control-value" data-control-value="camAzimuth"
-                  >0</span
-                >
+                <span class="control-value" data-control-value="camAzimuth">0</span>
               </div>
-              <input
-                id="control-camera-azimuth"
-                type="range"
-                min="0"
-                max="360"
-                step="0.1"
-                value="0"
-              />
+              <input id="control-camera-azimuth" type="range" min="0" max="360" step="0.1" value="0" />
             </fieldset>
             <fieldset>
               <div class="control-label">
                 <label for="control-camera-elevation">視角仰角 (°)</label>
-                <span class="control-value" data-control-value="camElevation"
-                  >95</span
-                >
+                <span class="control-value" data-control-value="camElevation">95</span>
               </div>
-              <input
-            id="control-camera-elevation"
-            type="range"
-            min="0"
-            max="360"
-            step="0.1"
-            value="359.8"
-          />
-        </fieldset>
-        <fieldset>
-          <div class="control-label">
-            <label for="control-camera-zoom">鏡頭縮放</label>
-            <span class="control-value" data-control-value="camZoom"
-              >0.53</span
-            >
-          </div>
-          <input
-            id="control-camera-zoom"
-            type="range"
-            min="0.5"
-            max="2.2"
-            step="0.01"
-            value="0.53"
-          />
-        </fieldset>
+              <input id="control-camera-elevation" type="range" min="0" max="360" step="0.1" value="359.8" />
+            </fieldset>
+            <fieldset>
+              <div class="control-label">
+                <label for="control-camera-zoom">鏡頭縮放</label>
+                <span class="control-value" data-control-value="camZoom">0.53</span>
+              </div>
+              <input id="control-camera-zoom" type="range" min="0.5" max="2.2" step="0.01" value="0.53" />
+            </fieldset>
+            <div class="audio-console">
+              <h3>語音敘述與環境聲</h3>
+              <button type="button" id="narrate-intro">Analytic: Introduction</button>
+              <button type="button" id="narrate-lensing">Analytic: Lensing</button>
+              <button type="button" id="narrate-horizon">Analytic: Horizon</button>
+              <button type="button" class="is-active" id="toggle-ambience">Toggle Ambience</button>
+            </div>
           </section>
         </div>
 
-        <div
-          id="tab-calculations"
-          class="tabpanel"
-          role="tabpanel"
-          aria-labelledby="tab-button-calculations"
-        >
-          <div class="calc-grid" id="calc-readout">
-            <!-- 動態插入 -->
-          </div>
+        <div id="tab-calculations" class="tabpanel" role="tabpanel" aria-labelledby="tab-button-calculations">
+          <div class="calc-grid" id="calc-readout"></div>
+          <div id="formula-panel" class="formula-panel">正在載入幾何與紅移公式...</div>
+          <section class="calc-console" id="calc-console">
+            <div class="console-header">
+              <h3>Relativistic Console</h3>
+              <div class="console-header-actions">
+                <button class="pill-button is-active" id="console-toggle">LIVE</button>
+                <button class="pill-button" id="console-fullscreen">⤢</button>
+                <button class="info-button" id="console-info">i</button>
+              </div>
+            </div>
+            <textarea id="formula-input">
+doppler = sqrt((1+beta)/(1-beta))
+inclination = 50
+observer = 45</textarea
+            >
+            <div id="suggestion-list"></div>
+            <div class="console-actions">
+              <button id="apply-formula">套用</button>
+              <button id="clear-formula">重設範例</button>
+            </div>
+            <div id="formula-output">輸入公式，例如 doppler = sqrt((1+beta)/(1-beta))</div>
+            <div id="console-tooltip" class="tooltip">
+              這裡可輸入任意表達式：每行使用「=」指派參數。可用變數： r, a, beta, incl, Rg, ISCO, photon, z。按 Tab
+              可快速套用建議。
+            </div>
+          </section>
         </div>
       </section>
 
       <section class="card__verification">
         <div>
           <h2>驗證狀態</h2>
-          <p id="verification-summary">
-            尚未執行 validation/verify_kerr.py
-          </p>
+          <p id="verification-summary">尚未執行 validation/verify_kerr.py</p>
         </div>
         <div class="fps-readout">
           <span class="label">fps</span>
