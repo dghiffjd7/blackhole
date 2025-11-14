@@ -24,14 +24,16 @@ body {
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   position: relative;
 }
 
 .space-backdrop {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at 20% 20%, rgba(30, 60, 128, 0.25), transparent 60%);
+  background: radial-gradient(circle at 20% 20%, rgba(30, 60, 128, 0.35), transparent 60%),
+    radial-gradient(circle at 80% 10%, rgba(88, 43, 153, 0.2), transparent 55%);
   pointer-events: none;
   z-index: 0;
 }
@@ -46,12 +48,12 @@ body {
 }
 
 .stars-far {
-  background-image: radial-gradient(1px 1px at 10px 20px, rgba(255, 255, 255, 0.25), transparent),
-    radial-gradient(1px 1px at 60px 80px, rgba(138, 197, 255, 0.25), transparent),
-    radial-gradient(1px 1px at 130px 150px, rgba(255, 255, 255, 0.2), transparent);
+  background-image: radial-gradient(1px 1px at 10px 20px, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1px 1px at 60px 80px, rgba(138, 197, 255, 0.35), transparent),
+    radial-gradient(1px 1px at 130px 150px, rgba(255, 255, 255, 0.3), transparent);
   background-size: 320px 320px;
   animation-duration: 180s;
-  opacity: 0.35;
+  opacity: 0.45;
 }
 
 .stars-mid {
@@ -60,7 +62,7 @@ body {
     radial-gradient(1.5px 1.5px at 260px 260px, rgba(255, 255, 255, 0.4), transparent);
   background-size: 220px 220px;
   animation-duration: 120s;
-  opacity: 0.5;
+  opacity: 0.65;
 }
 
 .stars-near {
@@ -69,7 +71,7 @@ body {
     radial-gradient(2px 2px at 40px 200px, rgba(147, 203, 255, 0.6), transparent);
   background-size: 160px 160px;
   animation-duration: 80s;
-  opacity: 0.7;
+  opacity: 0.85;
 }
 
 @keyframes starDrift {
