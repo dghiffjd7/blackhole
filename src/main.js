@@ -89,23 +89,6 @@ class KerrRenderer {
   }
 
 
-  _updateFormulaPanel(payload) {
-    if (!this.formulaPanel || !payload) return;
-    const { massSolar, gravRadius, spin, isco, photon, redshift, beta } = payload;
-    const massKg = massSolar * SOLAR_MASS;
-    this.formulaPanel.textContent = `R_g = 2GM / c²
-  = 2 × ${G} × ${massKg.toExponential(3)} / ${C}²
-  = ${gravRadius.toExponential(4)} m
-
-r_ISCO(a=${spin.toFixed(3)}) = ${isco.toFixed(4)} R_g
-r_ph = 2[1 + cos(2/3·acos(-|a|))] = ${photon.toFixed(4)} R_g
-
-z = 1/√(1 - 2/r + a²/r²) - 1
-  r = r_ph + 0.05 → z = ${redshift.toFixed(4)}
-
-β = r·ω/c,  ω = 1/(r^{3/2} + a) → β = ${beta.toFixed(4)}`;
-  }
-
   _initProgram() {
     const gl = this.gl;
     const vertexSrc = `#version 300 es
@@ -852,6 +835,23 @@ class BlackHoleCard {
     if (this.consoleLive) {
       this._evaluateFormulas(false);
     }
+  }
+
+  _updateFormulaPanel(payload) {
+    if (!this.formulaPanel || !payload) return;
+    const { massSolar, gravRadius, spin, isco, photon, redshift, beta } = payload;
+    const massKg = massSolar * SOLAR_MASS;
+    this.formulaPanel.textContent = `R_g = 2GM / c²
+  = 2 × ${G} × ${massKg.toExponential(3)} / ${C}²
+  = ${gravRadius.toExponential(4)} m
+
+r_ISCO(a=${spin.toFixed(3)}) = ${isco.toFixed(4)} R_g
+r_ph = 2[1 + cos(2/3·acos(-|a|))] = ${photon.toFixed(4)} R_g
+
+z = 1/√(1 - 2/r + a²/r²) - 1
+  r = r_ph + 0.05 → z = ${redshift.toFixed(4)}
+
+β = r·ω/c,  ω = 1/(r^{3/2} + a) → β = ${beta.toFixed(4)}`;
   }
 
   _initFormulaConsole() {
