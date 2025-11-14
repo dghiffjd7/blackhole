@@ -1593,7 +1593,7 @@ zoom = 18</textarea
         if (!suggestionList) return;
         const caret = formulaInput.selectionStart;
         const text = formulaInput.value.slice(0, caret);
-        const token = text.split(/[\s=()+\\-*/]+/).pop();
+        const token = text.split(/[\s=()+*\/-]+/).pop();
         if (!token || token.length < 2) {
           suggestionList.classList.remove('visible');
           return;
@@ -1620,7 +1620,7 @@ zoom = 18</textarea
         const caret = formulaInput.selectionStart;
         const before = formulaInput.value.slice(0, caret);
         const after = formulaInput.value.slice(formulaInput.selectionEnd);
-        const token = before.split(/[\s=()+\\-*/]+/).pop() || '';
+        const token = before.split(/[\s=()+*\/-]+/).pop() || '';
         const newBefore = before.slice(0, before.length - token.length) + text;
         formulaInput.value = newBefore + after;
         const newCaret = newBefore.length;
